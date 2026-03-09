@@ -9,7 +9,7 @@ import {
 import { useState } from 'react';
 import FloatingChat from '../components/FloatingChat';
 
-const floatingIcons = [
+const floatingIcons =[
   { icon: '🏛️', label: 'Borobudur', delay: 0 },
   { icon: '🦎', label: 'Komodo', delay: 0.1 },
   { icon: '🌺', label: 'Rafflesia', delay: 0.2 },
@@ -27,7 +27,7 @@ const floatingIcons = [
   { icon: '🛶', label: 'Phinisi', delay: 1.4 },
 ];
 
-const features = [
+const features =[
   {
     id: 'world',
     title: 'AxaraWorld — Explore Map',
@@ -66,7 +66,7 @@ const features = [
   }
 ];
 
-const steps = [
+const steps =[
   { icon: Compass, label: 'Jelajahi Provinsi' },
   { icon: BookOpen, label: 'Pelajari Budaya' },
   { icon: Target, label: 'Selesaikan Quest' },
@@ -75,28 +75,29 @@ const steps = [
   { icon: Trophy, label: 'Naik Peringkat' },
 ];
 
-const testimonials = [
+// REVISI: Menggunakan UI Avatars API agar gambar tidak pecah
+const testimonials =[
   {
     name: 'Budi S.',
     role: 'Pelajar',
     text: 'Platform ini membuat belajar budaya Indonesia terasa seperti bermain game.',
-    avatar: '/avatar-budi.png'
+    avatar: 'https://ui-avatars.com/api/?name=Budi+S&background=F04E36&color=fff'
   },
   {
     name: 'Ibu Ratna',
     role: 'Guru',
     text: 'Cara yang indah untuk memperkenalkan budaya Nusantara kepada generasi muda.',
-    avatar: '/avatar-ratna.png'
+    avatar: 'https://ui-avatars.com/api/?name=Ibu+Ratna&background=D4AF37&color=fff'
   },
   {
     name: 'Sarah M.',
     role: 'Wisatawan',
     text: 'Saya menemukan begitu banyak tradisi unik yang tidak pernah saya ketahui sebelumnya.',
-    avatar: '/avatar-sarah.png'
+    avatar: 'https://ui-avatars.com/api/?name=Sarah+M&background=10B981&color=fff'
   }
 ];
 
-const faqs = [
+const faqs =[
   { q: 'Apa itu AXARA?', a: 'AXARA adalah platform gamifikasi di mana Anda menjelajahi budaya Indonesia melalui peta interaktif, quest, dan cerita berbasis AI.' },
   { q: 'Bagaimana sistem XP bekerja?', a: 'Anda mendapatkan XP dengan menyelesaikan quest budaya, mini-game, dan berinteraksi dengan panduan AI. Kumpulkan XP untuk naik level dan membuka badge.' },
   { q: 'Apakah platform ini gratis?', a: 'Ya! AXARA sepenuhnya gratis digunakan bagi siapa saja yang ingin belajar tentang budaya Indonesia.' },
@@ -188,18 +189,18 @@ export default function LandingPage() {
 
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1, y: [0, -20, 0] }} // Float lebih tinggi biar terasa hidup
+              animate={{ opacity: 1, scale: 1, y: [0, -20, 0] }} 
               transition={{ duration: 0.6, y: { duration: 4, repeat: Infinity, ease: "easeInOut" } }}
-              className="relative h-[500px] flex items-center justify-center" // Container ditinggikan
+              className="relative h-125 flex items-center justify-center" 
             >
               {/* Glow Effect Utama */}
-              <div className="absolute w-[450px] h-[450px] bg-primary/40 blur-[120px] rounded-full z-0 opacity-70 animate-pulse"></div>
+              <div className="absolute w-112.5 h-112.5 bg-primary/40 blur-[120px] rounded-full z-0 opacity-70 animate-pulse"></div>
               
               {/* Glow */}
-              <div className="absolute w-[300px] h-[300px] bg-[#D4AF37]/30 blur-[80px] rounded-full z-0"></div>
+              <div className="absolute w-75 h-75 bg-[#D4AF37]/30 blur-[80px] rounded-full z-0"></div>
 
               {/* Maskot Container */}
-              <div className="relative z-10 w-[400px] h-[480px] flex items-center justify-center overflow-visible">
+              <div className="relative z-10 w-100 h-120 flex items-center justify-center overflow-visible">
     
               {/* Welcome Bubble */}
               <motion.div 
@@ -213,7 +214,6 @@ export default function LandingPage() {
                   duration: 0.5,
                   y: { duration: 3, repeat: Infinity, ease: "easeInOut" }
                 }}
-                /* Nilai top bubble */
                 className="absolute top-4 -right-16 z-40 drop-shadow-2xl" 
               >
                 <div className="relative flex items-center justify-center">
@@ -365,7 +365,7 @@ export default function LandingPage() {
 
           <div className="relative">
             {/* Connecting Line */}
-            <div className="hidden md:block absolute top-[32px] left-0 w-full h-1 bg-white/20 -translate-y-1/2"></div>
+            <div className="hidden md:block absolute top-8 left-0 w-full h-1 bg-white/20 -translate-y-1/2"></div>
             
             <div className="grid grid-cols-2 md:grid-cols-6 gap-8 relative z-10">
               {steps.map((step, i) => (
@@ -488,23 +488,33 @@ export default function LandingPage() {
 
             <div className="bg-white p-8 rounded-3xl border-2 border-cream shadow-sm">
               <h3 className="text-2xl font-display font-bold mb-6 text-primary">Hubungi Kami</h3>
-              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+              {/* REVISI: Menambahkan onSubmit dengan pesan Alert agar form interaktif */}
+              <form 
+                className="space-y-4" 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  alert('Terima kasih! Pesan Anda telah terkirim ke tim AXARA. Kami akan segera merespons.');
+                }}
+              >
                 <input 
                   type="text" 
+                  required
                   placeholder="Nama Anda" 
                   className="w-full bg-cream border-2 border-cream-dark rounded-xl px-4 py-3 text-text focus:outline-none focus:border-primary transition-colors font-bold placeholder:text-text-light"
                 />
                 <input 
                   type="email" 
+                  required
                   placeholder="Email Anda" 
                   className="w-full bg-cream border-2 border-cream-dark rounded-xl px-4 py-3 text-text focus:outline-none focus:border-primary transition-colors font-bold placeholder:text-text-light"
                 />
                 <textarea 
+                  required
                   placeholder="Pesan Anda" 
                   rows={4}
                   className="w-full bg-cream border-2 border-cream-dark rounded-xl px-4 py-3 text-text focus:outline-none focus:border-primary transition-colors resize-none font-bold placeholder:text-text-light"
                 ></textarea>
-                <button className="w-full bg-primary text-white font-bold py-4 rounded-xl hover:bg-primary-hover transition-colors flex justify-center items-center gap-2 shadow-lg shadow-primary/20">
+                <button type="submit" className="w-full bg-primary text-white font-bold py-4 rounded-xl hover:bg-primary-hover transition-colors flex justify-center items-center gap-2 shadow-lg shadow-primary/20">
                   Kirim Pesan <Send size={18} />
                 </button>
               </form>

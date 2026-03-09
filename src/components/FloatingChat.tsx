@@ -65,7 +65,7 @@ export default function FloatingChat() {
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
-            className="fixed bottom-24 right-6 w-80 sm:w-96 h-[500px] max-h-[70vh] bg-white rounded-3xl border-2 border-cream-dark shadow-2xl flex flex-col z-50 overflow-hidden"
+            className="fixed bottom-24 right-6 w-80 sm:w-96 h-125 max-h-[70vh] bg-white rounded-3xl border-2 border-cream-dark shadow-2xl flex flex-col z-50 overflow-hidden"
           >
             {/* Header */}
             <div className="bg-primary p-4 flex items-center justify-between text-white">

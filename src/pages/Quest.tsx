@@ -1,17 +1,17 @@
 // src/pages/Quest.tsx
 // Soal quiz diambil langsung dari Gemini (konsisten dengan FloatingChat yang sudah bekerja).
-// XP disimpan lokal di Zustand — sinkronisasi ke backend bisa ditambahkan nanti.
 
 import { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 import { generateQuiz } from '../services/ai.service';
 import { Loader2, X, Check, Award, Brain, Image as ImageIcon, Puzzle } from 'lucide-react';
 import MemoryMatch from '../components/games/MemoryMatch';
 import ProvincePuzzle from '../components/games/ProvincePuzzle';
+import BadgeUnlockModal from '../components/BadgeUnlockModal';
 
-// Tipe lokal (tidak perlu import dari quests.service lagi)
+// Tipe lokal
 interface QuizQuestion {
   question: string;
   options: string[];
@@ -45,7 +45,7 @@ function GuessCultureGame({
   const[selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
-  const [score, setScore] = useState(0);
+  const[score, setScore] = useState(0);
 
   const question = questions[currentIndex];
 
@@ -59,13 +59,13 @@ function GuessCultureGame({
   };
 
   const handleNext = () => {
-    const currentScore = score + (isCorrect ? 0 : 0); // score sudah terupdate
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((c) => c + 1);
       setSelectedAnswer(null);
       setIsCorrect(null);
       setShowExplanation(false);
     } else {
+      // Score akhir dikalkulasi saat soal terakhir dijawab
       onComplete(score + (isCorrect ? 1 : 0), questions.length);
     }
   };
@@ -74,22 +74,22 @@ function GuessCultureGame({
     <div className="max-w-2xl mx-auto">
       {/* Progress bar + back */}
       <div className="flex items-center gap-4 mb-8">
-        <button onClick={onBack} className="text-text-light hover:text-text transition-colors">
+        <button onClick={onBack} className="text-gray-400 hover:text-gray-600 transition-colors">
           <X size={24} strokeWidth={3} />
         </button>
-        <div className="flex-1 h-4 bg-cream-dark rounded-full overflow-hidden">
+        <div className="flex-1 h-4 bg-gray-200 rounded-full overflow-hidden">
           <motion.div
             className="h-full bg-primary"
             animate={{ width: `${((currentIndex + (selectedAnswer !== null ? 1 : 0)) / questions.length) * 100}%` }}
             transition={{ type: 'spring', stiffness: 50 }}
           />
         </div>
-        <span className="text-sm font-bold text-text-light shrink-0">
+        <span className="text-sm font-bold text-gray-500 shrink-0">
           {currentIndex + 1}/{questions.length}
         </span>
       </div>
 
-      <h2 className="text-2xl md:text-3xl font-bold text-text leading-tight mb-8">
+      <h2 className="text-2xl md:text-3xl font-bold text-[#0a0a0a] leading-tight mb-8">
         {question?.question}
       </h2>
 
@@ -98,15 +98,17 @@ function GuessCultureGame({
           const isSelected = selectedAnswer === idx;
           const isCorrectOption = idx === question.correctIndex;
           let btnClass = 'w-full p-4 rounded-2xl border-2 text-left font-bold text-lg transition-all ';
+          
           if (selectedAnswer === null) {
-            btnClass += 'border-cream-dark bg-white hover:border-primary/50 hover:bg-cream text-text';
+            btnClass += 'border-gray-200 bg-white hover:border-[#F04E36]/50 hover:bg-red-50 text-[#0a0a0a]';
           } else if (isCorrectOption) {
             btnClass += 'border-green-500 bg-green-50 text-green-700';
           } else if (isSelected && !isCorrectOption) {
             btnClass += 'border-red-500 bg-red-50 text-red-700';
           } else {
-            btnClass += 'border-cream-dark bg-cream text-text-light opacity-50';
+            btnClass += 'border-gray-200 bg-gray-50 text-gray-400 opacity-50';
           }
+          
           return (
             <button key={idx} onClick={() => handleAnswer(idx)} disabled={selectedAnswer !== null} className={btnClass}>
               <div className="flex justify-between items-center">
@@ -161,12 +163,20 @@ export default function QuestPage() {
   const provinceName = provinceId ? (PROVINCE_NAMES[provinceId] ?? provinceId.replace(/-/g, ' ')) : 'Indonesia';
 
   const [selectedGame, setSelectedGame] = useState<GameId | null>(null);
-  const[questions, setQuestions] = useState<QuizQuestion[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
+  const[loading, setLoading] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
-  const[finalScore, setFinalScore] = useState(0);
+  
+  // State untuk Data Akhir
+  const [finalScore, setFinalScore] = useState(0);
   const [finalTotal, setFinalTotal] = useState(0);
-  const [finalXp, setFinalXp] = useState(0);
+  const[finalXp, setFinalXp] = useState(0);
+  
+  // STATE BARU: Menyimpan daftar game apa saja yang sudah diselesaikan
+  const [completedGames, setCompletedGames] = useState<string[]>([]);
+  
+  // State untuk memunculkan Modal Badge
+  const [showBadge, setShowBadge] = useState(false);
 
   const startGuessCulture = async () => {
     if (!provinceId) { alert('Pilih provinsi dahulu di AxaraWorld!'); return; }
@@ -188,9 +198,30 @@ export default function QuestPage() {
     setFinalScore(score);
     setFinalTotal(total);
     setFinalXp(xp);
-    if (score === total) {
-      confetti({ particleCount: 150, spread: 70, colors:['#F04E36', '#D4AF37', '#FFFFFF'] });
+    
+    if (provinceId && selectedGame && score > 0) {
+      // 1. Masukkan game ini ke daftar "Selesai" (Jika belum ada)
+      if (!completedGames.includes(selectedGame)) {
+        const newCompleted = [...completedGames, selectedGame];
+        setCompletedGames(newCompleted);
+        
+        // 2. Cek apakah user sudah MENAMATKAN KE-3 GAME?
+        if (newCompleted.length === 3) {
+          // Buka Master Badge!
+          setShowBadge(true);
+        } else {
+          // Kalau belum 3, ledakkan confetti biasa aja sbg hadiah mini
+          if (score === total) confetti({ particleCount: 100, spread: 70, colors:['#F04E36', '#D4AF37', '#FFFFFF'] });
+        }
+      } else {
+        // Jika game ini sudah pernah dimainkan sebelumnya, kasih confetti aja
+        if (score === total) confetti({ particleCount: 100, spread: 70, colors:['#F04E36', '#D4AF37', '#FFFFFF'] });
+      }
+    } else {
+      // Logic fallback
+      if (score === total) confetti({ particleCount: 100, spread: 70, colors:['#F04E36', '#D4AF37', '#FFFFFF'] });
     }
+    
     setIsFinished(true);
   };
 
@@ -205,19 +236,24 @@ export default function QuestPage() {
 
   // ── Game Selector ────────────────────────────────────────────────────────
   if (!selectedGame) {
+    // Mengecek status tiap game untuk mengubah tampilan tombol
+    const isGuessDone = completedGames.includes('guess');
+    const isMemoryDone = completedGames.includes('memory');
+    const isPuzzleDone = completedGames.includes('puzzle');
+
     return (
       <div className="max-w-4xl mx-auto space-y-8">
         <header className="text-center md:text-left">
-          <h1 className="text-3xl font-black text-text">AxaraBattle</h1>
-          <p className="text-text-light font-medium mt-2">
+          <h1 className="text-3xl font-black text-[#0a0a0a]">AxaraBattle</h1>
+          <p className="text-gray-500 font-medium mt-2">
             {provinceId
-              ? `Uji pengetahuanmu tentang ${provinceName}.`
+              ? `Selesaikan ke-3 quest untuk mendapatkan Badge Master ${provinceName}!`
               : 'Pilih provinsi di AxaraWorld terlebih dahulu untuk memulai.'}
           </p>
         </header>
 
         {!provinceId && (
-          <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-4 text-amber-700 font-medium text-sm">
+          <div className="bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-4 text-yellow-700 font-medium text-sm">
             ⚠️ Kamu belum memilih provinsi. Kembali ke{' '}
             <button onClick={() => navigate('/app')} className="font-bold underline">AxaraWorld</button>{' '}
             untuk memilih provinsi.
@@ -230,16 +266,24 @@ export default function QuestPage() {
             whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             onClick={startGuessCulture}
             disabled={!provinceId}
-            className="bg-white border-2 border-cream-dark rounded-3xl p-6 text-left hover:border-primary transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`border-2 rounded-3xl p-6 text-left transition-all group disabled:opacity-50 disabled:cursor-not-allowed ${
+              isGuessDone ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200 hover:border-primary'
+            }`}
           >
-            <div className="w-16 h-16 bg-cream rounded-2xl flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors text-primary">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${
+              isGuessDone ? 'bg-green-500 text-white' : 'bg-red-50 text-primary group-hover:bg-primary group-hover:text-white'
+            }`}>
               <Brain size={32} />
             </div>
-            <h3 className="text-xl font-bold text-text mb-2">Guess The Culture</h3>
-            <p className="text-text-light font-medium text-sm">Tebak budaya, makanan, dan tradisi dari pertanyaan interaktif berbasis AI.</p>
+            <h3 className="text-xl font-bold text-[#0a0a0a] mb-2">Guess The Culture</h3>
+            <p className="text-gray-500 font-medium text-sm">Tebak budaya, makanan, dan tradisi dari pertanyaan interaktif berbasis AI.</p>
             <div className="mt-4 flex gap-2">
-              <span className="text-xs font-bold px-2 py-1 bg-primary/10 text-primary rounded-full">+50 XP/soal</span>
-              <span className="text-xs font-bold px-2 py-1 bg-green-100 text-green-700 rounded-full">✅ Live</span>
+              <span className="text-xs font-bold px-2 py-1 bg-red-50 text-primary rounded-full">+50 XP/soal</span>
+              {isGuessDone ? (
+                <span className="text-xs font-bold px-2 py-1 bg-green-500 text-white rounded-full">✅ Selesai</span>
+              ) : (
+                <span className="text-xs font-bold px-2 py-1 bg-green-100 text-green-700 rounded-full">🟢 Live</span>
+              )}
             </div>
           </motion.button>
 
@@ -248,16 +292,24 @@ export default function QuestPage() {
             whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             onClick={() => provinceId && setSelectedGame('memory')}
             disabled={!provinceId}
-            className="bg-white border-2 border-cream-dark rounded-3xl p-6 text-left hover:border-primary transition-colors group disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`border-2 rounded-3xl p-6 text-left transition-all group disabled:opacity-50 disabled:cursor-not-allowed ${
+              isMemoryDone ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200 hover:border-[#D4AF37]'
+            }`}
           >
-            <div className="w-16 h-16 bg-cream rounded-2xl flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors text-primary">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${
+              isMemoryDone ? 'bg-green-500 text-white' : 'bg-yellow-50 text-[#D4AF37] group-hover:bg-[#D4AF37] group-hover:text-white'
+            }`}>
               <ImageIcon size={32} />
             </div>
-            <h3 className="text-xl font-bold text-text mb-2">Memory Match</h3>
-            <p className="text-text-light font-medium text-sm">Cocokkan emoji budaya dengan namanya. Temukan semua pasangan!</p>
+            <h3 className="text-xl font-bold text-[#0a0a0a] mb-2">Memory Match</h3>
+            <p className="text-gray-500 font-medium text-sm">Cocokkan budaya daerah dengan pasangannya yang tepat!</p>
             <div className="mt-4 flex gap-2">
-              <span className="text-xs font-bold px-2 py-1 bg-primary/10 text-primary rounded-full">+30 XP/pasang</span>
-              <span className="text-xs font-bold px-2 py-1 bg-green-100 text-green-700 rounded-full">✅ Live</span>
+              <span className="text-xs font-bold px-2 py-1 bg-red-50 text-primary rounded-full">+30 XP/pasang</span>
+              {isMemoryDone ? (
+                <span className="text-xs font-bold px-2 py-1 bg-green-500 text-white rounded-full">✅ Selesai</span>
+              ) : (
+                <span className="text-xs font-bold px-2 py-1 bg-green-100 text-green-700 rounded-full">🟢 Live</span>
+              )}
             </div>
           </motion.button>
 
@@ -265,16 +317,25 @@ export default function QuestPage() {
           <motion.button
             whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
             onClick={() => setSelectedGame('puzzle')}
-            className="bg-white border-2 border-cream-dark rounded-3xl p-6 text-left hover:border-primary transition-colors group"
+            disabled={!provinceId}
+            className={`border-2 rounded-3xl p-6 text-left transition-all group disabled:opacity-50 disabled:cursor-not-allowed ${
+              isPuzzleDone ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200 hover:border-[#10B981]'
+            }`}
           >
-            <div className="w-16 h-16 bg-cream rounded-2xl flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors text-primary">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-4 transition-colors ${
+              isPuzzleDone ? 'bg-green-500 text-white' : 'bg-green-50 text-[#10B981] group-hover:bg-[#10B981] group-hover:text-white'
+            }`}>
               <Puzzle size={32} />
             </div>
-            <h3 className="text-xl font-bold text-text mb-2">Province Puzzle</h3>
-            <p className="text-text-light font-medium text-sm">Cocokkan nama provinsi ke posisinya di peta Indonesia.</p>
+            <h3 className="text-xl font-bold text-[#0a0a0a] mb-2">Province Puzzle</h3>
+            <p className="text-gray-500 font-medium text-sm">Susun kepingan acak untuk membentuk peta wilayah yang utuh.</p>
             <div className="mt-4 flex gap-2">
-              <span className="text-xs font-bold px-2 py-1 bg-primary/10 text-primary rounded-full">+25 XP/provinsi</span>
-              <span className="text-xs font-bold px-2 py-1 bg-green-100 text-green-700 rounded-full">✅ Live</span>
+              <span className="text-xs font-bold px-2 py-1 bg-red-50 text-primary rounded-full">+25 XP/provinsi</span>
+              {isPuzzleDone ? (
+                <span className="text-xs font-bold px-2 py-1 bg-green-500 text-white rounded-full">✅ Selesai</span>
+              ) : (
+                <span className="text-xs font-bold px-2 py-1 bg-green-100 text-green-700 rounded-full">🟢 Live</span>
+              )}
             </div>
           </motion.button>
         </div>
@@ -287,7 +348,7 @@ export default function QuestPage() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
         <Loader2 className="w-12 h-12 text-primary animate-spin" />
-        <p className="text-text-light font-bold animate-pulse">AI sedang menyiapkan soal tentang {provinceName}...</p>
+        <p className="text-gray-500 font-bold animate-pulse">AI sedang menyiapkan soal tentang {provinceName}...</p>
       </div>
     );
   }
@@ -295,34 +356,52 @@ export default function QuestPage() {
   // ── Finish Screen ────────────────────────────────────────────────────────
   if (isFinished) {
     return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="flex flex-col items-center justify-center h-[70vh] text-center space-y-6"
-      >
-        <div className="w-32 h-32 bg-cream rounded-full flex items-center justify-center mb-4 border-4 border-primary/20">
-          <Award className="w-16 h-16 text-primary" />
-        </div>
-        <h1 className="text-4xl font-black text-text">Quest Selesai! 🎊</h1>
-        <p className="text-xl text-text-light font-medium">
-          Skor: <span className="text-green-500 font-bold">{finalScore}</span> dari {finalTotal}
-        </p>
-        <div className="bg-cream border-2 border-cream-dark rounded-2xl p-6 w-full max-w-md">
-          <p className="text-primary font-bold text-lg mb-1">XP Diperoleh</p>
-          <p className="text-4xl font-black text-primary">+{finalXp} XP</p>
-        </div>
-        <button
-          onClick={resetGame}
-          className="w-full max-w-md py-4 bg-primary text-white font-bold text-lg rounded-2xl hover:bg-primary-hover transition-colors shadow-lg shadow-primary/30"
+      <>
+        {/* Tampilkan Modal Badge HANYA SAAT TAMAT 3 GAME */}
+        <BadgeUnlockModal 
+          isOpen={showBadge} 
+          onClose={() => setShowBadge(false)} 
+          badgeName={`Master ${provinceName}`} 
+          badgeIcon="👑" 
+        />
+      
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col items-center justify-center h-[70vh] text-center space-y-6"
         >
-          Main Game Lain
-        </button>
-      </motion.div>
+          <div className="w-32 h-32 bg-gray-50 rounded-full flex items-center justify-center mb-4 border-4 border-gray-100">
+            <Award className="w-16 h-16 text-[#D4AF37]" />
+          </div>
+          <h1 className="text-4xl font-black text-[#0a0a0a]">Quest Selesai! 🎊</h1>
+          
+          <p className="text-xl text-gray-500 font-medium">
+            Skor: <span className="text-green-500 font-bold">{finalScore}</span> dari {finalTotal}
+          </p>
+          
+          <div className="bg-gray-50 border-2 border-gray-200 rounded-2xl p-6 w-full max-w-md">
+            <p className="text-gray-500 font-bold text-lg mb-1">XP Diperoleh</p>
+            <p className="text-4xl font-black text-primary">+{finalXp} XP</p>
+          </div>
+
+          <button
+            onClick={() => {
+              if (completedGames.length === 3) {
+                navigate('/app'); // Pindah ke halaman Peta (AxaraWorld)
+              } else {
+                resetGame(); // Reset layar untuk pilih game lain
+              }
+            }}
+            className="w-full max-w-md py-4 bg-primary text-white font-bold text-lg rounded-2xl hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30"
+          >
+            {completedGames.length === 3 ? "Kembali ke AxaraWorld" : "Pilih Game Lain"}
+          </button>
+        </motion.div>
+      </>
     );
   }
 
   // ── Active Games ─────────────────────────────────────────────────────────
-  // INI BAGIAN YANG AKU REVISI (Dari onComplete -> onWin, onBack -> onExit)
   return (
     <div className="max-w-4xl mx-auto">
       {selectedGame === 'guess' && questions.length > 0 && (
