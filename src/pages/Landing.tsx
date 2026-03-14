@@ -374,7 +374,7 @@ export default function LandingPage() {
       <section 
         id="how-it-works" 
         className="py-24 text-white overflow-hidden bg-cover bg-center relative"
-        style={{ backgroundImage: `linear-gradient(rgba(240, 78, 54, 0.82), rgba(200, 40, 20, 0.88)), url('/bg-hero.jpg')` }}
+        style={{ backgroundImage: `linear-gradient(rgba(240, 78, 54, 0.45), rgba(200, 40, 20, 0.5)), url('/bg-howtoplay.jpg')` }}
       >
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
@@ -409,7 +409,7 @@ export default function LandingPage() {
       </section>
 
       {/* ===================== TESTIMONI ===================== */}
-      <section className="py-24 bg-white overflow-hidden relative">
+      <section className="py-24 bg-cream text-text relative" >
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="text-center mb-16 max-w-4xl mx-auto">
             <h2 className="text-4xl md:text-5xl font-display font-extrabold text-primary mb-4">
@@ -535,7 +535,12 @@ export default function LandingPage() {
       </section>
 
       {/* ===================== FOOTER + KONTAK ===================== */}
-      <footer className="bg-cream-dark text-text pt-20 pb-10">
+      <footer
+      className="text-text pt-20 pb-10 bg-cover bg-center relative"
+      style={{
+        backgroundImage: "linear-gradient(rgba(255,251,235,0.9), rgba(255,251,235,0.9)), url('/bg-footer.jpg')"
+      }}
+    >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-2 gap-16 mb-16">
             {/* Info Kiri */}
