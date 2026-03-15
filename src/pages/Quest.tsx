@@ -7,13 +7,15 @@ import { generateQuiz } from '../services/ai.service';
 import { questsService } from '../services/quests.service';
 import {
   Loader2, X, Check, Brain, Image as ImageIcon, Sparkles,
-  Map, Trophy, Zap, Star, Swords, Shield, ArrowRight,
+  Map, Trophy, Zap, Star, Swords, Shield, Clock, ArrowRight,
   RotateCcw, Flame, ChevronLeft, PenTool,
 } from 'lucide-react';
 import MemoryMatch from '../components/games/MemoryMatch';
 import CultureSwipe from '../components/games/CultureSwipe';
 import AksaraScramble from '../components/games/AksaraScramble';
 import BadgeUnlockModal from '../components/BadgeUnlockModal';
+import { useTranslation } from '../hooks/useTranslation'; // ✨ IMPORT BARU
+import LanguageSwitcher from '../components/LanguageSwitcher'; // ✨ IMPORT BARU
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface QuizQuestion {
@@ -64,17 +66,17 @@ function makePressHandlers(releaseShadow: string) {
 function GameWrapper({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="flex flex-col w-full relative min-h-dvh overflow-x-hidden overflow-y-auto"
-      style={{ background: '#F4F1E0', fontFamily: "'Nunito', sans-serif" }}
+      className="flex flex-col w-full relative overflow-hidden"
+      style={{ minHeight: '100dvh', background: '#F4F1E0', fontFamily: "'Nunito', sans-serif" }}
     >
       <div
-        className="fixed inset-0 pointer-events-none z-0"
+        className="absolute inset-0 pointer-events-none z-0"
         style={{
           backgroundImage: 'radial-gradient(circle, rgba(241,76,56,0.07) 1px, transparent 1px)',
           backgroundSize: '26px 26px',
         }}
       />
-      <div className="relative z-10 flex flex-col flex-1 pb-10">{children}</div>
+      <div className="relative z-10 flex flex-col flex-1">{children}</div>
     </div>
   );
 }
@@ -423,6 +425,7 @@ function GameCard({
 
 // ─── Main QuestPage ────────────────────────────────────────────────────────────
 export default function QuestPage() {
+  const { t } = useTranslation(); // ✨ MENGGUNAKAN i18n
   const [searchParams] = useSearchParams();
   const navigate       = useNavigate();
 
@@ -437,11 +440,11 @@ export default function QuestPage() {
     : 'Indonesia';
 
   const [selectedGame, setSelectedGame] = useState<GameId | null>(null);
-  const [questions, setQuestions]       = useState<QuizQuestion[]>([]);
-  const[loading, setLoading]           = useState(false);
+  const[questions, setQuestions]       = useState<QuizQuestion[]>([]);
+  const [loading, setLoading]           = useState(false);
   const [isFinished, setIsFinished]     = useState(false);
-  const [finalScore, setFinalScore]     = useState(0);
-  const[finalTotal, setFinalTotal]     = useState(0);
+  const[finalScore, setFinalScore]     = useState(0);
+  const [finalTotal, setFinalTotal]     = useState(0);
   const [finalXp, setFinalXp]           = useState(0);
 
   const [completedGames, setCompletedGames] = useState<GameId[]>(() => {
@@ -456,7 +459,7 @@ export default function QuestPage() {
     return [];
   });
 
-  const [showBadge, setShowBadge] = useState(false);
+  const[showBadge, setShowBadge] = useState(false);
 
   const saveCompletedGames = (games: GameId[]) => {
     sessionStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify({ provinceId, games }));
@@ -478,47 +481,50 @@ export default function QuestPage() {
     }
   };
 
-  // REVISI 2: Menggunakan "string" untuk gameType agar TS tidak error saat di-cast as any
-  const submitToBackend = async (
-    gameType: string,
-    score: number, total: number, questionsData: QuizQuestion[]
-  ) => {
-    if (!provinceId) return;
-    try {
-      // as any digunakan sebagai trik agar tidak konflik dengan type di service
-      const { sessionId } = await questsService.createSession(provinceId, gameType as any, questionsData);
-      const answers = Array(total).fill(0).map((_, i) => (i < score ? 0 : -1));
-      await questsService.submitSession(sessionId, answers);
-    } catch (err) { console.error('Backend silent fail:', err); }
-  };
+  // ✨ CHANGED: gameType parameter to just 'string'
+const submitToBackend = async (
+  gameType: string,
+  score: number, total: number, questionsData: QuizQuestion[]
+) => {
+  if (!provinceId) return;
+  try {
+    const { sessionId } = await questsService.createSession(provinceId, gameType as any, questionsData);
+    const answers = Array(total).fill(0).map((_, i) => (i < score ? 0 : -1));
+    await questsService.submitSession(sessionId, answers);
+  } catch (err) { console.error('Backend silent fail:', err); }
+};
 
   const finishGame = async (score: number, total: number, xpPerPoint: number, questionsData?: QuizQuestion[]) => {
-    const xp = score * xpPerPoint;
-    setFinalScore(score); setFinalTotal(total); setFinalXp(xp);
+  const xp = score * xpPerPoint;
+  setFinalScore(score); setFinalTotal(total); setFinalXp(xp);
 
-    if (selectedGame && provinceId && questionsData) {
-      const map: Record<GameId, string> = {
-        guess: 'guess_culture', memory: 'memory_match', swipe: 'province_puzzle', scramble: 'aksara_scramble',
-      };
-      await submitToBackend(map[selectedGame], score, total, questionsData);
-    }
+  if (selectedGame && provinceId && questionsData) {
+    // ✨ CHANGED: Record<GameId, string> instead of union type
+    const map: Record<GameId, string> = {
+      guess: 'guess_culture', 
+      memory: 'memory_match', 
+      swipe: 'province_puzzle', 
+      scramble: 'aksara_scramble',
+    };
+    await submitToBackend(map[selectedGame], score, total, questionsData);
+  }
 
-    if (provinceId && selectedGame) {
-      if (!completedGames.includes(selectedGame)) {
-        const newList: GameId[] = [...completedGames, selectedGame];
-        saveCompletedGames(newList);
-        if (newList.length === 4) {
-          confetti({ particleCount: 200, spread: 90, colors:['#F14C38', '#FBBF24', '#fff'] });
-          setShowBadge(true);
-        } else if (score === total) {
-          confetti({ particleCount: 100, spread: 70, colors:['#F14C38', '#FBBF24', '#fff'] });
-        }
+  if (provinceId && selectedGame) {
+    if (!completedGames.includes(selectedGame)) {
+      const newList: GameId[] = [...completedGames, selectedGame];
+      saveCompletedGames(newList);
+      if (newList.length === 4) {
+        confetti({ particleCount: 200, spread: 90, colors: ['#F14C38', '#FBBF24', '#fff'] });
+        setShowBadge(true);
       } else if (score === total) {
         confetti({ particleCount: 100, spread: 70, colors: ['#F14C38', '#FBBF24', '#fff'] });
       }
+    } else if (score === total) {
+      confetti({ particleCount: 100, spread: 70, colors: ['#F14C38', '#FBBF24', '#fff'] });
     }
-    setIsFinished(true);
-  };
+  }
+  setIsFinished(true);
+};
 
   const resetGame = () => {
     setIsFinished(false); setSelectedGame(null); setQuestions([]);
@@ -732,7 +738,7 @@ export default function QuestPage() {
         provinceId={provinceId}
         onWin={(score, total) => {
           const q: QuizQuestion[] = Array(total).fill(null).map((_, i) => ({
-            question: `Kata ${i + 1}`, options: ['', '', '', ''],
+            question: `Kata ${i + 1}`, options:['', '', '', ''],
             correctIndex: 0, explanation: 'Scramble word',
           }));
           finishGame(score, total, 15, q);
@@ -749,20 +755,23 @@ export default function QuestPage() {
   const isScrambleDone = completedGames.includes('scramble');
   const totalDone      = completedGames.length;
 
-  const BadgePill = ({ done, label }: { done: boolean; label: string }) =>
-    done ? (
+  const BadgePill = ({ done, label }: { done: boolean; label: string }) => {
+    const { t } = useTranslation(); // ✨ MENGGUNAKAN i18n
+    return done ? (
       <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-full"
         style={{ background: '#F14C38', border: '2px solid #1a0f0a' }}>
         <Check size={10} className="text-white" strokeWidth={3} />
-        <span className="text-[9px] font-black text-white uppercase">Selesai</span>
+        {/* ✨ CHANGED - TRANSLATION */}
+        <span className="text-[9px] font-black text-white uppercase">{t.badges.completed}</span>
       </div>
     ) : (
       <div className="px-2.5 py-1.5 rounded-full"
-        style={{ background: label === '🔥 NEW' ? '#ede9fe' : '#d1fae5', border: `2px solid ${label === '🔥 NEW' ? '#8B5CF6' : '#22c55e'}` }}>
+        style={{ background: label.includes('NEW') || label.includes('🔥') ? '#ede9fe' : '#d1fae5', border: `2px solid ${label.includes('NEW') || label.includes('🔥') ? '#8B5CF6' : '#22c55e'}` }}>
         <span className="text-[9px] font-black uppercase tracking-wide"
-          style={{ color: label === '🔥 NEW' ? '#8B5CF6' : '#15803d' }}>{label}</span>
+          style={{ color: label.includes('NEW') || label.includes('🔥') ? '#8B5CF6' : '#15803d' }}>{label}</span>
       </div>
     );
+  };
 
   return (
     <GameWrapper>
@@ -775,24 +784,34 @@ export default function QuestPage() {
             <Swords size={17} className="text-white" strokeWidth={3} />
           </div>
           <div>
+            {/* ✨ CHANGED - TRANSLATION */}
             <h1 className="text-xl font-black leading-none" style={{ color: '#1a0f0a' }}>
-              AXARA <span style={{ color: '#F14C38' }}>BATTLE</span>
+              {t.quest.title.split(' ')[0]} <span style={{ color: '#F14C38' }}>{t.quest.title.split(' ')[1] || 'BATTLE'}</span>
             </h1>
+            {/* ✨ CHANGED - TRANSLATION */}
             <p className="text-[9px] font-black tracking-widest uppercase leading-none mt-0.5" style={{ color: '#F14C38' }}>
-              Taklukkan Nusantara
+              {t.quest.subtitle}
             </p>
           </div>
         </motion.div>
 
-        <button
-          onClick={() => { sessionStorage.removeItem(STORAGE_KEY_PROVINCE); sessionStorage.removeItem(STORAGE_KEY_COMPLETED); navigate('/app'); }}
-          className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl"
-          style={{ background: 'white', border: '2.5px solid #1a0f0a', boxShadow: '2px 2px 0 #1a0f0a', transition: 'all 0.1s' }}
-          {...makePressHandlers('2px 2px 0 #1a0f0a')}
-        >
-          <Map size={14} strokeWidth={3} style={{ color: '#F14C38' }} />
-          <span className="text-[11px] font-black uppercase tracking-wide" style={{ color: '#1a0f0a' }}>Peta</span>
-        </button>
+        {/* ✨ ADDED - Language switcher + Peta button */}
+        <div className="flex gap-2">
+          <LanguageSwitcher variant="minimal" />
+          
+          <button
+            onClick={() => { sessionStorage.removeItem(STORAGE_KEY_PROVINCE); sessionStorage.removeItem(STORAGE_KEY_COMPLETED); navigate('/app'); }}
+            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl"
+            style={{ background: 'white', border: '2.5px solid #1a0f0a', boxShadow: '2px 2px 0 #1a0f0a', transition: 'all 0.1s' }}
+            {...makePressHandlers('2px 2px 0 #1a0f0a')}
+          >
+            <Map size={14} strokeWidth={3} style={{ color: '#F14C38' }} />
+            {/* ✨ CHANGED - TRANSLATION */}
+            <span className="text-[11px] font-black uppercase tracking-wide" style={{ color: '#1a0f0a' }}>
+              {t.nav.world === 'AxaraWorld' ? 'Peta' : 'Map'}
+            </span>
+          </button>
+        </div>
       </header>
 
       <div className="flex flex-col flex-1 px-5 pb-6 gap-5 overflow-y-auto">
@@ -809,8 +828,9 @@ export default function QuestPage() {
               <Shield size={26} className="text-white" strokeWidth={3} />
             </div>
             <div className="flex-1 min-w-0">
+              {/* ✨ CHANGED - TRANSLATION */}
               <p className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#fbbf24' }}>
-                Provinsi Aktif
+                {t.quest.activeProvince}
               </p>
               <p className="text-xl font-black text-white uppercase leading-tight truncate">{provinceName}</p>
             </div>
@@ -824,8 +844,9 @@ export default function QuestPage() {
                     }} />
                 ))}
               </div>
+              {/* ✨ CHANGED - TRANSLATION */}
               <span className="text-[9px] font-black uppercase tracking-wide" style={{ color: '#fbbf24' }}>
-                {totalDone}/4 Quest
+                {totalDone}/4 {t.quest.questsCompleted}
               </span>
             </div>
           </motion.div>
@@ -836,10 +857,9 @@ export default function QuestPage() {
             style={{ background: '#fff7ed', border: '3px solid #FBBF24', boxShadow: '3px 3px 0 #FBBF24' }}
           >
             <span className="text-2xl">⚠️</span>
+            {/* ✨ CHANGED - TRANSLATION */}
             <p className="text-sm font-bold" style={{ color: '#92400e' }}>
-              Belum ada provinsi. Kembali ke{' '}
-              <button onClick={() => navigate('/app')} className="underline font-black">AxaraWorld</button>{' '}
-              untuk memilih!
+              {t.quest.noProvince}. <button onClick={() => navigate('/app')} className="underline font-black">AxaraWorld</button> {t.quest.backToMap}
             </p>
           </motion.div>
         )}
@@ -852,16 +872,18 @@ export default function QuestPage() {
             style={{ background: 'white', border: '3px solid rgba(26,15,10,0.12)', boxShadow: '3px 3px 0 rgba(26,15,10,0.06)' }}
           >
             <div className="flex justify-between items-center mb-3">
+              {/* ✨ CHANGED - TRANSLATION */}
               <span className="text-xs font-black uppercase tracking-widest" style={{ color: '#F14C38' }}>
-                Progress Badge Master
+                {t.quest.progressBadge}
               </span>
               <span className="text-xs font-black" style={{ color: '#1a0f0a' }}>{Math.round((totalDone / 4) * 100)}%</span>
             </div>
             <XPBar value={totalDone} max={4} color={totalDone === 4 ? '#FBBF24' : '#F14C38'} />
+            {/* ✨ CHANGED - TRANSLATION */}
             <p className="text-xs font-bold mt-2" style={{ color: 'rgba(26,15,10,0.4)' }}>
               {totalDone === 4
-                ? '🎉 Semua quest selesai! Badge Master sudah kamu raih!'
-                : `Selesaikan ${4 - totalDone} quest lagi untuk unlock Badge Master ${provinceName}`}
+                ? `🎉 ${t.quest.allComplete}`
+                : `${4 - totalDone} ${t.quest.unlockBadge} ${provinceName}`}
             </p>
           </motion.div>
         )}
@@ -869,8 +891,9 @@ export default function QuestPage() {
         {/* Divider */}
         <div className="flex items-center gap-3">
           <div className="h-px flex-1" style={{ background: 'rgba(26,15,10,0.12)' }} />
+          {/* ✨ CHANGED - TRANSLATION */}
           <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'rgba(26,15,10,0.35)' }}>
-            Pilih Quest
+            {t.quest.selectQuest}
           </span>
           <div className="h-px flex-1" style={{ background: 'rgba(26,15,10,0.12)' }} />
         </div>
@@ -880,56 +903,60 @@ export default function QuestPage() {
           <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}>
             <GameCard
               icon={<Brain size={30} strokeWidth={2.5} />}
-              title="Guess The Culture"
-              description="Tebak budaya, makanan & tradisi lewat pertanyaan interaktif dari AI."
-              xpLabel="+50 XP / soal"
+              // ✨ CHANGED - TRANSLATION
+              title={t.games.guessTheCulture.title}
+              description={t.games.guessTheCulture.description}
+              xpLabel={t.games.guessTheCulture.xpLabel}
               accentColor="#F14C38"
               isDone={isGuessDone}
               disabled={!provinceId}
               onClick={startGuessCulture}
-              badge={<BadgePill done={isGuessDone} label="🟢 Live" />}
+              badge={<BadgePill done={isGuessDone} label={`🟢 ${t.badges.live}`} />}
             />
           </motion.div>
 
           <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.22 }}>
             <GameCard
               icon={<ImageIcon size={30} strokeWidth={2.5} />}
-              title="Memory Match"
-              description="Cocokkan pasangan budaya daerah dengan tepat dan secepat mungkin!"
-              xpLabel="+30 XP / pasang"
+              // ✨ CHANGED - TRANSLATION
+              title={t.games.memoryMatch.title}
+              description={t.games.memoryMatch.description}
+              xpLabel={t.games.memoryMatch.xpLabel}
               accentColor="#FBBF24"
               isDone={isMemoryDone}
               disabled={!provinceId}
               onClick={() => provinceId && setSelectedGame('memory')}
-              badge={<BadgePill done={isMemoryDone} label="🟢 Live" />}
+              badge={<BadgePill done={isMemoryDone} label={`🟢 ${t.badges.live}`} />}
             />
           </motion.div>
 
           <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.29 }}>
             <GameCard
               icon={<Sparkles size={30} strokeWidth={2.5} />}
-              title="Culture Swipe"
-              description="Swipe kartu budaya: Mitos atau Fakta? Lebih seru dari Quizizz!"
-              xpLabel="+25 XP / kartu"
+              // ✨ CHANGED - TRANSLATION
+              title={t.games.cultureSwipe.title}
+              description={t.games.cultureSwipe.description}
+              xpLabel={t.games.cultureSwipe.xpLabel}
               accentColor="#8B5CF6"
               isDone={isSwipeDone}
               disabled={!provinceId}
               onClick={() => provinceId && setSelectedGame('swipe')}
-              badge={<BadgePill done={isSwipeDone} label="🟢 Live" />}
+              badge={<BadgePill done={isSwipeDone} label={`🔥 ${t.badges.new}`} />}
             />
           </motion.div>
 
           <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.36 }}>
             <GameCard
               icon={<PenTool size={30} strokeWidth={2.5} />}
-              title="Aksara Scramble"
-              description="Susun huruf acak jadi nama budaya! Tebak dari clue AI yang diberikan."
-              xpLabel="+15 XP / kata"
+              // ✨ CHANGED - TRANSLATION
+              title={t.games.aksaraScramble.title}
+              description={t.games.aksaraScramble.description}
+              xpLabel={t.games.aksaraScramble.xpLabel}
               accentColor="#10B981"
               isDone={isScrambleDone}
               disabled={!provinceId}
               onClick={() => provinceId && setSelectedGame('scramble')}
-              badge={<BadgePill done={isScrambleDone} label="🔥 NEW" />}
+              badge={<BadgePill done={isScrambleDone} label={`🔥 ${t.badges.new}`} />}
             />
           </motion.div>
         </div>
@@ -941,8 +968,9 @@ export default function QuestPage() {
           style={{ background: 'rgba(241,76,56,0.06)', border: '2px dashed rgba(241,76,56,0.25)' }}
         >
           <Zap size={14} fill="#FBBF24" style={{ color: '#FBBF24' }} strokeWidth={2} />
+          {/* ✨ CHANGED - TRANSLATION */}
           <span className="text-xs font-black uppercase tracking-widest" style={{ color: 'rgba(26,15,10,0.4)' }}>
-            Total maks: <span style={{ color: '#F14C38' }}>525 XP</span> per provinsi
+            {t.quest.totalXP}: <span style={{ color: '#F14C38' }}>525 XP</span> {t.quest.perProvince}
           </span>
         </motion.div>
       </div>

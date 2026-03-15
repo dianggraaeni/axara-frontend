@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-mo
 import { X, Check, AlertCircle, Clock, Brain } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { generateCultureSwipeData, SwipeCard } from '../../services/ai.service';
+import { useSound } from '../../hooks/useSound'; // ✨ SOUND IMPORT
 
 interface CultureSwipeProps {
   provinceId: string;
@@ -71,6 +72,9 @@ export default function CultureSwipe({ provinceId, onExit, onWin }: CultureSwipe
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // ✨ SOUND EFFECTS
+  const { playCorrect, playWrong, playSwipe } = useSound();
+
   const formattedProvinceName = provinceId
     ? provinceId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     : 'Indonesia';
@@ -115,7 +119,10 @@ export default function CultureSwipe({ provinceId, onExit, onWin }: CultureSwipe
     const isCorrect = answerIsFact === card.isFact;
     if (isCorrect) {
       setScore(s => s + 1);
+      playCorrect(); // ✨ PLAY CORRECT SOUND
       confetti({ particleCount: 60, spread: 55, origin: { y: 0.6 }, colors: ['#F14C38', '#FBBF24', '#fff'] });
+    } else {
+      playWrong(); // ✨ PLAY WRONG SOUND
     }
     setFeedback({ isCorrect, explanation: card.explanation });
     if (timerRef.current) clearInterval(timerRef.current);
@@ -123,8 +130,12 @@ export default function CultureSwipe({ provinceId, onExit, onWin }: CultureSwipe
 
   const handleDragEnd = (_e: unknown, info: { offset: { x: number } }) => {
     if (feedback) return;
-    if (Math.abs(info.offset.x) > SWIPE_THRESHOLD) handleAnswer(info.offset.x > 0);
-    else x.set(0);
+    if (Math.abs(info.offset.x) > SWIPE_THRESHOLD) {
+      playSwipe(); // ✨ PLAY SWIPE SOUND
+      handleAnswer(info.offset.x > 0);
+    } else {
+      x.set(0);
+    }
   };
 
   const nextCard = () => {
