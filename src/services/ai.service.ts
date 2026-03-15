@@ -230,3 +230,90 @@ Balas HANYA dalam format JSON array murni. Format:[{"statement": "...", "isFact"
     ];
   }
 };
+
+// ─── Aksara Scramble Generator (SUSUN KATA BUDAYA) ────────────────────────────
+export interface ScrambleWord {
+  correctWord: string;
+  scrambledWord: string;
+  clue: string;
+  category?: string;
+}
+
+export const generateAksaraScramble = async (provinceName: string, count: number = 5): Promise<ScrambleWord[]> => {
+  try {
+    const chat = ai.chats.create({
+      model: 'gemini-3-flash-preview',
+      config: {
+        systemInstruction: 'Kamu adalah pembuat teka-teki kata budaya Indonesia. Balas HANYA dengan JSON array murni tanpa markdown atau backticks.',
+      },
+      history: [],
+    });
+
+    const prompt = `Buat ${count} kata budaya dari ${provinceName} untuk permainan susun huruf.
+Kata harus SPESIFIK dan UNIK dari ${provinceName} (seperti nama makanan, tarian, tempat wisata, senjata tradisional, pakaian adat, alat musik).
+Untuk setiap kata:
+1. Berikan clue/petunjuk yang jelas tapi tidak terlalu mudah (maksimal 15 kata)
+2. Acak huruf-hurufnya secara random (scramble)
+3. Gunakan huruf KAPITAL semua
+4. Pastikan kata tidak terlalu panjang (maksimal 12 huruf)
+
+Balas HANYA dengan JSON array murni. Format:
+[
+  {
+    "correctWord": "RENDANG",
+    "scrambledWord": "NGDRANE",
+    "clue": "Masakan daging sapi berbumbu yang dimasak lama hingga kering",
+    "category": "makanan"
+  }
+]`;
+
+    const response = await chat.sendMessage({ message: prompt });
+    let text = response.text ?? '';
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+    const parsed = JSON.parse(text) as ScrambleWord[];
+
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      throw new Error('Invalid scramble data format');
+    }
+
+    return parsed;
+  } catch (error) {
+    console.error('Aksara Scramble generation error:', error);
+    
+    // Fallback data - data darurat jika AI error
+    const name = provinceName || 'Nusantara';
+    return [
+      {
+        correctWord: 'RENDANG',
+        scrambledWord: 'NGDRANE',
+        clue: 'Masakan daging berbumbu khas Minangkabau yang dimasak lama',
+        category: 'makanan',
+      },
+      {
+        correctWord: 'BATIK',
+        scrambledWord: 'TIKBA',
+        clue: 'Kain tradisional dengan motif dibuat menggunakan canting dan malam',
+        category: 'kerajinan',
+      },
+      {
+        correctWord: 'GAMELAN',
+        scrambledWord: 'MEALANG',
+        clue: 'Alat musik tradisional Jawa terdiri dari berbagai instrumen logam',
+        category: 'musik',
+      },
+      {
+        correctWord: 'ANGKLUNG',
+        scrambledWord: 'GANKLUNG',
+        clue: 'Alat musik dari bambu yang dimainkan dengan digoyangkan',
+        category: 'musik',
+      },
+      {
+        correctWord: 'WAYANG',
+        scrambledWord: 'GANYAW',
+        clue: 'Seni pertunjukan boneka kulit yang menceritakan kisah pewayangan',
+        category: 'seni',
+      },
+    ];
+  }
+};

@@ -7,11 +7,12 @@ import { generateQuiz } from '../services/ai.service';
 import { questsService } from '../services/quests.service';
 import {
   Loader2, X, Check, Brain, Image as ImageIcon, Sparkles,
-  Map, Trophy, Zap, Star, Swords, Shield, Clock, ArrowRight,
-  RotateCcw, Flame, ChevronLeft,
+  Map, Trophy, Zap, Star, Swords, Shield, ArrowRight,
+  RotateCcw, Flame, ChevronLeft, PenTool,
 } from 'lucide-react';
 import MemoryMatch from '../components/games/MemoryMatch';
 import CultureSwipe from '../components/games/CultureSwipe';
+import AksaraScramble from '../components/games/AksaraScramble';
 import BadgeUnlockModal from '../components/BadgeUnlockModal';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -23,7 +24,7 @@ interface QuizQuestion {
   category?: string;
 }
 
-type GameId = 'guess' | 'memory' | 'swipe';
+type GameId = 'guess' | 'memory' | 'swipe' | 'scramble';
 
 const PROVINCE_NAMES: Record<string, string> = {
   'bali': 'Bali',
@@ -63,17 +64,17 @@ function makePressHandlers(releaseShadow: string) {
 function GameWrapper({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className="flex flex-col w-full relative overflow-hidden"
-      style={{ minHeight: '100dvh', background: '#F4F1E0', fontFamily: "'Nunito', sans-serif" }}
+      className="flex flex-col w-full relative min-h-dvh overflow-x-hidden overflow-y-auto"
+      style={{ background: '#F4F1E0', fontFamily: "'Nunito', sans-serif" }}
     >
       <div
-        className="absolute inset-0 pointer-events-none z-0"
+        className="fixed inset-0 pointer-events-none z-0"
         style={{
           backgroundImage: 'radial-gradient(circle, rgba(241,76,56,0.07) 1px, transparent 1px)',
           backgroundSize: '26px 26px',
         }}
       />
-      <div className="relative z-10 flex flex-col flex-1">{children}</div>
+      <div className="relative z-10 flex flex-col flex-1 pb-10">{children}</div>
     </div>
   );
 }
@@ -107,7 +108,7 @@ function GuessCultureGame({
   onComplete: (score: number, total: number) => void;
   onBack: () => void;
 }) {
-  const [currentIndex, setCurrentIndex]     = useState(0);
+  const[currentIndex, setCurrentIndex]     = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isCorrect, setIsCorrect]           = useState<boolean | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
@@ -360,7 +361,7 @@ function GameCard({
       disabled={disabled}
       whileHover={!disabled ? { y: -6, rotate: -0.4 } : {}}
       whileTap={!disabled ? { scale: 0.97 } : {}}
-      className="flex flex-col rounded-[24px] overflow-hidden text-left w-full"
+      className="flex flex-col rounded-3xl overflow-hidden text-left w-full"
       style={{
         background: isDone ? '#fff7ed' : 'white',
         border: `4px solid ${isDone ? '#F14C38' : '#1a0f0a'}`,
@@ -426,7 +427,7 @@ export default function QuestPage() {
   const navigate       = useNavigate();
 
   const urlProvinceId = searchParams.get('province');
-  const [provinceId]  = useState<string | null>(() => {
+  const[provinceId]  = useState<string | null>(() => {
     if (urlProvinceId) { sessionStorage.setItem(STORAGE_KEY_PROVINCE, urlProvinceId); return urlProvinceId; }
     return sessionStorage.getItem(STORAGE_KEY_PROVINCE);
   });
@@ -437,10 +438,10 @@ export default function QuestPage() {
 
   const [selectedGame, setSelectedGame] = useState<GameId | null>(null);
   const [questions, setQuestions]       = useState<QuizQuestion[]>([]);
-  const [loading, setLoading]           = useState(false);
+  const[loading, setLoading]           = useState(false);
   const [isFinished, setIsFinished]     = useState(false);
   const [finalScore, setFinalScore]     = useState(0);
-  const [finalTotal, setFinalTotal]     = useState(0);
+  const[finalTotal, setFinalTotal]     = useState(0);
   const [finalXp, setFinalXp]           = useState(0);
 
   const [completedGames, setCompletedGames] = useState<GameId[]>(() => {
@@ -477,13 +478,15 @@ export default function QuestPage() {
     }
   };
 
+  // REVISI 2: Menggunakan "string" untuk gameType agar TS tidak error saat di-cast as any
   const submitToBackend = async (
-    gameType: 'guess_culture' | 'memory_match' | 'province_puzzle',
+    gameType: string,
     score: number, total: number, questionsData: QuizQuestion[]
   ) => {
     if (!provinceId) return;
     try {
-      const { sessionId } = await questsService.createSession(provinceId, gameType, questionsData);
+      // as any digunakan sebagai trik agar tidak konflik dengan type di service
+      const { sessionId } = await questsService.createSession(provinceId, gameType as any, questionsData);
       const answers = Array(total).fill(0).map((_, i) => (i < score ? 0 : -1));
       await questsService.submitSession(sessionId, answers);
     } catch (err) { console.error('Backend silent fail:', err); }
@@ -494,8 +497,8 @@ export default function QuestPage() {
     setFinalScore(score); setFinalTotal(total); setFinalXp(xp);
 
     if (selectedGame && provinceId && questionsData) {
-      const map: Record<GameId, 'guess_culture' | 'memory_match' | 'province_puzzle'> = {
-        guess: 'guess_culture', memory: 'memory_match', swipe: 'province_puzzle',
+      const map: Record<GameId, string> = {
+        guess: 'guess_culture', memory: 'memory_match', swipe: 'province_puzzle', scramble: 'aksara_scramble',
       };
       await submitToBackend(map[selectedGame], score, total, questionsData);
     }
@@ -504,11 +507,11 @@ export default function QuestPage() {
       if (!completedGames.includes(selectedGame)) {
         const newList: GameId[] = [...completedGames, selectedGame];
         saveCompletedGames(newList);
-        if (newList.length === 3) {
-          confetti({ particleCount: 200, spread: 90, colors: ['#F14C38', '#FBBF24', '#fff'] });
+        if (newList.length === 4) {
+          confetti({ particleCount: 200, spread: 90, colors:['#F14C38', '#FBBF24', '#fff'] });
           setShowBadge(true);
         } else if (score === total) {
-          confetti({ particleCount: 100, spread: 70, colors: ['#F14C38', '#FBBF24', '#fff'] });
+          confetti({ particleCount: 100, spread: 70, colors:['#F14C38', '#FBBF24', '#fff'] });
         }
       } else if (score === total) {
         confetti({ particleCount: 100, spread: 70, colors: ['#F14C38', '#FBBF24', '#fff'] });
@@ -637,8 +640,8 @@ export default function QuestPage() {
             </div>
 
             {/* Quest progress badges */}
-            <div className="flex items-center justify-center gap-2">
-              {(['guess', 'memory', 'swipe'] as GameId[]).map(g => (
+            <div className="flex items-center justify-center gap-2 flex-wrap">
+              {(['guess', 'memory', 'swipe', 'scramble'] as GameId[]).map(g => (
                 <div key={g} className="flex items-center gap-1.5 px-3 py-2 rounded-full"
                   style={{
                     background: completedGames.includes(g) ? '#F14C38' : 'white',
@@ -646,7 +649,7 @@ export default function QuestPage() {
                   }}>
                   <span className="text-[10px] font-black uppercase tracking-wide"
                     style={{ color: completedGames.includes(g) ? 'white' : 'rgba(26,15,10,0.3)' }}>
-                    {g === 'guess' ? 'Quiz' : g === 'memory' ? 'Match' : 'Swipe'}
+                    {g === 'guess' ? 'Quiz' : g === 'memory' ? 'Match' : g === 'swipe' ? 'Swipe' : 'Aksara'}
                   </span>
                   {completedGames.includes(g) && <Check size={10} className="text-white" strokeWidth={3} />}
                 </div>
@@ -656,7 +659,7 @@ export default function QuestPage() {
             {/* CTA buttons */}
             <div className="w-full max-w-sm flex flex-col gap-3">
               <button
-                onClick={() => completedGames.length === 3 ? navigate('/app') : resetGame()}
+                onClick={() => completedGames.length === 4 ? navigate('/app') : resetGame()}
                 className="w-full py-5 font-black text-xl uppercase rounded-2xl text-white tracking-widest"
                 style={{
                   background: '#F14C38', border: '4px solid #1a0f0a',
@@ -664,7 +667,7 @@ export default function QuestPage() {
                 }}
                 {...makePressHandlers('0 7px 0 #1a0f0a')}
               >
-                {completedGames.length === 3 ? '🗺️ Kembali ke AxaraWorld' : '⚔️ Pilih Game Lain'}
+                {completedGames.length === 4 ? '🗺️ Kembali ke AxaraWorld' : '⚔️ Pilih Game Lain'}
               </button>
               <button
                 onClick={resetGame}
@@ -699,7 +702,7 @@ export default function QuestPage() {
         provinceId={provinceId}
         onWin={(matched: number, total: number) => {
           const q: QuizQuestion[] = Array(total).fill(null).map((_, i) => ({
-            question: `Pasangan ${i + 1}`, options: ['', '', '', ''],
+            question: `Pasangan ${i + 1}`, options:['', '', '', ''],
             correctIndex: 0, explanation: 'Memory match pair',
           }));
           finishGame(matched, total, 30, q);
@@ -714,7 +717,7 @@ export default function QuestPage() {
         provinceId={provinceId}
         onWin={(score, total) => {
           const q: QuizQuestion[] = Array(total).fill(null).map((_, i) => ({
-            question: `Kartu ${i + 1}`, options: ['', '', '', ''],
+            question: `Kartu ${i + 1}`, options:['', '', '', ''],
             correctIndex: 0, explanation: 'Culture swipe card',
           }));
           finishGame(score, total, 25, q);
@@ -723,12 +726,28 @@ export default function QuestPage() {
       />
     );
   }
+  if (selectedGame === 'scramble' && provinceId) {
+    return (
+      <AksaraScramble
+        provinceId={provinceId}
+        onWin={(score, total) => {
+          const q: QuizQuestion[] = Array(total).fill(null).map((_, i) => ({
+            question: `Kata ${i + 1}`, options: ['', '', '', ''],
+            correctIndex: 0, explanation: 'Scramble word',
+          }));
+          finishGame(score, total, 15, q);
+        }}
+        onExit={() => setSelectedGame(null)}
+      />
+    );
+  }
 
   // ── Game Selector ─────────────────────────────────────────────────────────
-  const isGuessDone  = completedGames.includes('guess');
-  const isMemoryDone = completedGames.includes('memory');
-  const isSwipeDone  = completedGames.includes('swipe');
-  const totalDone    = completedGames.length;
+  const isGuessDone    = completedGames.includes('guess');
+  const isMemoryDone   = completedGames.includes('memory');
+  const isSwipeDone    = completedGames.includes('swipe');
+  const isScrambleDone = completedGames.includes('scramble');
+  const totalDone      = completedGames.length;
 
   const BadgePill = ({ done, label }: { done: boolean; label: string }) =>
     done ? (
@@ -797,7 +816,7 @@ export default function QuestPage() {
             </div>
             <div className="flex flex-col items-end gap-2">
               <div className="flex gap-1.5">
-                {[0, 1, 2].map(i => (
+                {[0, 1, 2, 3].map(i => (
                   <div key={i} className="w-3.5 h-3.5 rounded-full"
                     style={{
                       background: i < totalDone ? '#FBBF24' : 'rgba(255,255,255,0.12)',
@@ -806,7 +825,7 @@ export default function QuestPage() {
                 ))}
               </div>
               <span className="text-[9px] font-black uppercase tracking-wide" style={{ color: '#fbbf24' }}>
-                {totalDone}/3 Quest
+                {totalDone}/4 Quest
               </span>
             </div>
           </motion.div>
@@ -836,13 +855,13 @@ export default function QuestPage() {
               <span className="text-xs font-black uppercase tracking-widest" style={{ color: '#F14C38' }}>
                 Progress Badge Master
               </span>
-              <span className="text-xs font-black" style={{ color: '#1a0f0a' }}>{totalDone * 33}%</span>
+              <span className="text-xs font-black" style={{ color: '#1a0f0a' }}>{Math.round((totalDone / 4) * 100)}%</span>
             </div>
-            <XPBar value={totalDone} max={3} color={totalDone === 3 ? '#FBBF24' : '#F14C38'} />
+            <XPBar value={totalDone} max={4} color={totalDone === 4 ? '#FBBF24' : '#F14C38'} />
             <p className="text-xs font-bold mt-2" style={{ color: 'rgba(26,15,10,0.4)' }}>
-              {totalDone === 3
+              {totalDone === 4
                 ? '🎉 Semua quest selesai! Badge Master sudah kamu raih!'
-                : `Selesaikan ${3 - totalDone} quest lagi untuk unlock Badge Master ${provinceName}`}
+                : `Selesaikan ${4 - totalDone} quest lagi untuk unlock Badge Master ${provinceName}`}
             </p>
           </motion.div>
         )}
@@ -857,7 +876,7 @@ export default function QuestPage() {
         </div>
 
         {/* Game cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.15 }}>
             <GameCard
               icon={<Brain size={30} strokeWidth={2.5} />}
@@ -896,20 +915,34 @@ export default function QuestPage() {
               isDone={isSwipeDone}
               disabled={!provinceId}
               onClick={() => provinceId && setSelectedGame('swipe')}
-              badge={<BadgePill done={isSwipeDone} label="🔥 NEW" />}
+              badge={<BadgePill done={isSwipeDone} label="🟢 Live" />}
+            />
+          </motion.div>
+
+          <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.36 }}>
+            <GameCard
+              icon={<PenTool size={30} strokeWidth={2.5} />}
+              title="Aksara Scramble"
+              description="Susun huruf acak jadi nama budaya! Tebak dari clue AI yang diberikan."
+              xpLabel="+15 XP / kata"
+              accentColor="#10B981"
+              isDone={isScrambleDone}
+              disabled={!provinceId}
+              onClick={() => provinceId && setSelectedGame('scramble')}
+              badge={<BadgePill done={isScrambleDone} label="🔥 NEW" />}
             />
           </motion.div>
         </div>
 
         {/* Total XP hint */}
         <motion.div
-          initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.35 }}
+          initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.42 }}
           className="flex items-center justify-center gap-2 py-4 rounded-2xl"
           style={{ background: 'rgba(241,76,56,0.06)', border: '2px dashed rgba(241,76,56,0.25)' }}
         >
           <Zap size={14} fill="#FBBF24" style={{ color: '#FBBF24' }} strokeWidth={2} />
           <span className="text-xs font-black uppercase tracking-widest" style={{ color: 'rgba(26,15,10,0.4)' }}>
-            Total maks: <span style={{ color: '#F14C38' }}>450 XP</span> per provinsi
+            Total maks: <span style={{ color: '#F14C38' }}>525 XP</span> per provinsi
           </span>
         </motion.div>
       </div>
