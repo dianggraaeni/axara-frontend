@@ -9,6 +9,8 @@ import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simp
 import { provinces as allProvinces } from '../services/provinces.data';
 import { useAuth } from '../context/AuthContext';
 import { useUserStats } from '../hooks/useBackendData';
+import { useTranslation } from '../hooks/useTranslation'; // ✨ ADDED
+import LanguageSwitcher from '../components/LanguageSwitcher'; // ✨ ADDED
 
 const geoUrl = "/indonesia-province-simple.json";
 
@@ -44,6 +46,7 @@ const STATUS_MAP_FILL: Record<ProvinceStatus, string> = {
 };
 
 export default function MapPage() {
+  const { t } = useTranslation(); // ✨ ADDED
   const navigate = useNavigate();
   const { user } = useAuth();
   const { stats } = useUserStats();
@@ -142,10 +145,10 @@ export default function MapPage() {
           </div>
           <div>
             <h1 className="text-xl font-black leading-none" style={{ color: '#1a0f0a' }}>
-              AXARA <span style={{ color: '#F14C38' }}>WORLD</span>
+              {t.world.title.split(' ')[0]} <span style={{ color: '#F14C38' }}>{t.world.title.split(' ')[1] || 'WORLD'}</span>
             </h1>
             <p className="text-[9px] font-black tracking-widest uppercase leading-none mt-0.5" style={{ color: '#F14C38' }}>
-              Jelajahi Nusantara
+              {t.world.subtitle}
             </p>
           </div>
         </motion.div>
@@ -166,13 +169,13 @@ export default function MapPage() {
 
         {/* Legend + Zoom */}
         <div className="flex items-center gap-2">
-          {/* Legend (desktop only) */}
+          {/* Legend (desktop only) - ✨ TRANSLATED */}
           <div className="hidden lg:flex items-center gap-3 mr-2">
             {([
-              { color: '#FBBF24', label: 'Saat ini',  border: '#1a0f0a' },
-              { color: '#F14C38', label: 'Selesai',   border: '#1a0f0a' },
-              { color: '#FFFFFF', label: 'Tersedia',  border: '#9ca3af' },
-              { color: '#d1d5db', label: 'Terkunci',  border: '#9ca3af' },
+              { color: '#FBBF24', label: t.world.inProgress, border: '#1a0f0a' },
+              { color: '#F14C38', label: t.world.completed, border: '#1a0f0a' },
+              { color: '#FFFFFF', label: t.world.subtitle.includes('Explore') ? 'Available' : 'Tersedia', border: '#9ca3af' },
+              { color: '#d1d5db', label: t.world.locked, border: '#9ca3af' },
             ] as const).map(item => (
               <div key={item.label} className="flex items-center gap-1">
                 <div className="w-2.5 h-2.5 rounded-sm"
@@ -182,6 +185,9 @@ export default function MapPage() {
               </div>
             ))}
           </div>
+
+          {/* Language Switcher - ✨ ADDED */}
+          <LanguageSwitcher variant="minimal" />
 
           {/* Zoom */}
           {[
@@ -201,7 +207,7 @@ export default function MapPage() {
       </header>
 
       {/* ════════════ MAP ════════════ */}
-      <div className="relative z-10 ml-5 mr-24 rounded-[24px] overflow-hidden flex-1 min-h-0"
+      <div className="relative z-10 ml-5 mr-24 rounded-3xl overflow-hidden flex-1 min-h-0"
         style={{
           border: '4px solid #1a0f0a',
           boxShadow: '0 6px 24px rgba(241,76,56,0.12)',
@@ -392,7 +398,7 @@ export default function MapPage() {
         {selectedProv && selectedStatus && selectedStatus !== 'locked' && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-5"
+            className="fixed inset-0 z-100 flex items-center justify-center p-5"
             style={{ background: 'rgba(26,15,10,0.72)', backdropFilter: 'blur(8px)' }}
             onClick={() => setSelectedId(null)}>
 
@@ -426,9 +432,9 @@ export default function MapPage() {
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-widest leading-none"
                       style={{ color: selectedStatus === 'current' ? 'rgba(26,15,10,0.55)' : 'rgba(255,255,255,0.65)' }}>
-                      {selectedStatus === 'current' ? '⭐ Provinsi Aktif Kamu'
-                        : selectedStatus === 'completed' ? '✅ Sudah Diselesaikan'
-                        : '🗺️ Lokasi'}
+                      {selectedStatus === 'current' ? `⭐ ${t.world.inProgress}` :
+                       selectedStatus === 'completed' ? `✅ ${t.world.completed}` :
+                       `🗺️ ${t.world.provinceInfo}`}
                     </p>
                     <h2 className="text-xl font-black uppercase leading-tight"
                       style={{ color: selectedStatus === 'current' ? '#1a0f0a' : 'white' }}>
@@ -464,7 +470,7 @@ export default function MapPage() {
                           <BookOpen size={12} className="text-white" strokeWidth={3} />
                         </div>
                         <span className="font-black text-xs uppercase tracking-widest" style={{ color: '#F14C38' }}>
-                          Ringkasan Sejarah
+                          {t.world.subtitle.includes('Explore') ? 'Historical Summary' : 'Ringkasan Sejarah'}
                         </span>
                       </div>
                       <p className="text-sm font-bold leading-relaxed" style={{ color: '#1a0f0a', opacity: 0.8 }}>
@@ -485,7 +491,7 @@ export default function MapPage() {
                       </div>
                       <div>
                         <p className="text-[9px] font-black uppercase tracking-widest leading-none mb-1" style={{ color: '#F14C38' }}>
-                          Ibukota: {selectedProv.capital}
+                          {t.world.subtitle.includes('Explore') ? 'Capital' : 'Ibukota'}: {selectedProv.capital}
                         </p>
                         <h3 className="text-2xl font-black leading-tight" style={{ color: '#1a0f0a' }}>
                           {selectedProv.tradition.name}
@@ -500,8 +506,8 @@ export default function MapPage() {
 
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { label: 'Filosofi', content: selectedProv.tradition.philosophy },
-                        { label: 'Deskripsi', content: selectedProv.tradition.desc },
+                        { label: t.world.subtitle.includes('Explore') ? 'Philosophy' : 'Filosofi', content: selectedProv.tradition.philosophy },
+                        { label: t.world.subtitle.includes('Explore') ? 'Description' : 'Deskripsi', content: selectedProv.tradition.desc },
                       ].map(card => (
                         <div key={card.label} className="rounded-xl p-3.5"
                           style={{ background: 'white', border: '2px solid rgba(26,15,10,0.12)' }}>
@@ -522,7 +528,7 @@ export default function MapPage() {
                         style={{ background: '#F4F1E0', border: '3px solid rgba(26,15,10,0.2)' }}>
                         <CheckCircle size={16} strokeWidth={3} style={{ color: 'rgba(26,15,10,0.4)' }} />
                         <span className="font-black text-sm uppercase tracking-wide" style={{ color: 'rgba(26,15,10,0.4)' }}>
-                          Sudah Diselesaikan
+                          {t.world.completed}
                         </span>
                       </div>
                     ) : (
@@ -548,7 +554,9 @@ export default function MapPage() {
                           (e.currentTarget).style.boxShadow = '0 5px 0 #1a0f0a';
                           (e.currentTarget).style.transform = 'none';
                         }}>
-                        {selectedStatus === 'current' ? '⚔️ Lanjutkan Petualangan' : '🗺️ Mulai Petualangan'}
+                        {selectedStatus === 'current' 
+                          ? (t.world.subtitle.includes('Explore') ? '⚔️ Continue Adventure' : '⚔️ Lanjutkan Petualangan')
+                          : (t.world.subtitle.includes('Explore') ? '🗺️ Start Adventure' : '🗺️ Mulai Petualangan')}
                       </motion.button>
                     )}
                   </div>

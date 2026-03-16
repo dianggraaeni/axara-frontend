@@ -2,6 +2,8 @@ import { React, useState, useRef, useEffect } from 'react';
 import { Send, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { chatWithGuide } from '../services/ai.service';
+import { useTranslation } from '../hooks/useTranslation'; // ✨ ADDED
+import LanguageSwitcher from '../components/LanguageSwitcher'; // ✨ ADDED
 
 interface Message {
   id: string;
@@ -24,13 +26,6 @@ const pressHandlers = {
   },
 };
 
-const QUICK_PROMPTS = [
-  '🏯 Cerita tentang Majapahit',
-  '🎭 Tradisi unik Bali',
-  '🍜 Kuliner khas Jawa',
-  '🎵 Alat musik tradisional',
-];
-
 const BotAvatar = () => (
   <div className="w-14 h-14 shrink-0" style={{ marginBottom: '-6px' }}>
     <img
@@ -43,11 +38,28 @@ const BotAvatar = () => (
 );
 
 export default function ChatPage() {
+  const { t } = useTranslation(); // ✨ ADDED
+
+  // ✨ DYNAMIC QUICK PROMPTS based on language
+  const QUICK_PROMPTS = t.chat.greeting.includes('Hello') 
+    ? [
+        '🏯 Story about Majapahit',
+        '🎭 Unique Bali traditions',
+        '🍜 Javanese cuisine',
+        '🎵 Traditional instruments',
+      ]
+    : [
+        '🏯 Cerita tentang Majapahit',
+        '🎭 Tradisi unik Bali',
+        '🍜 Kuliner khas Jawa',
+        '🎵 Alat musik tradisional',
+      ];
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'model',
-      text: 'Halo! Aku Axara, pemandu budaya Nusantara kamu 🌺 Ada yang ingin kamu tanyakan tentang budaya, sejarah, atau tradisi di Indonesia?',
+      text: t.chat.greeting, // ✨ TRANSLATED
     },
   ]);
   const [input, setInput] = useState('');
@@ -86,7 +98,9 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'model',
-        text: 'Maaf, terjadi kesalahan. Coba lagi ya!',
+        text: t.chat.greeting.includes('Hello') 
+          ? 'Sorry, an error occurred. Please try again!'
+          : 'Maaf, terjadi kesalahan. Coba lagi ya!', // ✨ TRANSLATED
       }]);
     } finally {
       setIsLoading(false);
@@ -119,13 +133,22 @@ export default function ChatPage() {
           />
         </div>
         <div className="flex-1">
+          {/* ✨ TRANSLATED */}
           <h1 className="text-lg font-black leading-none text-white uppercase">
-            Axara <span style={{ color: '#FBBF24' }}>Guide</span>
+            Axara <span style={{ color: '#FBBF24' }}>
+              {t.chat.greeting.includes('Hello') ? 'Guide' : 'Guide'}
+            </span>
           </h1>
           <p className="text-[9px] font-black tracking-widest uppercase leading-none mt-0.5 text-white/60">
-            AI Pemandu Budaya Nusantara
+            {t.chat.greeting.includes('Hello') ? 'AI Nusantara Culture Guide' : 'AI Pemandu Budaya Nusantara'}
           </p>
         </div>
+
+        {/* ✨ Language Switcher */}
+        <div className="mr-2">
+          <LanguageSwitcher variant="minimal" />
+        </div>
+
         <div
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
           style={{ background: '#1a0f0a', border: '2px solid #FBBF24' }}
@@ -214,11 +237,12 @@ export default function ChatPage() {
 
       {messages.length === 1 && !isLoading && (
         <div className="shrink-0 z-10 px-4 pb-2">
+          {/* ✨ TRANSLATED */}
           <p
             className="text-[9px] font-black uppercase tracking-widest mb-2 px-1"
             style={{ color: 'rgba(26,15,10,0.4)' }}
           >
-            Mulai dengan pertanyaan ini:
+            {t.chat.greeting.includes('Hello') ? 'Start with these questions:' : 'Mulai dengan pertanyaan ini:'}
           </p>
           <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {QUICK_PROMPTS.map((prompt) => (
@@ -265,7 +289,7 @@ export default function ChatPage() {
                   handleSend();
                 }
               }}
-              placeholder="Tanya tentang budaya Indonesia..."
+              placeholder={t.chat.placeholder} // ✨ TRANSLATED
               rows={1}
               className="w-full px-4 py-3 font-bold text-sm resize-none"
               style={{
@@ -297,11 +321,14 @@ export default function ChatPage() {
             }
           </button>
         </div>
+        {/* ✨ TRANSLATED */}
         <p
           className="text-center text-[9px] font-black uppercase tracking-widest mt-2"
           style={{ color: 'rgba(26,15,10,0.3)' }}
         >
-          Enter untuk kirim · Shift+Enter untuk baris baru
+          {t.chat.greeting.includes('Hello') 
+            ? 'Enter to send · Shift+Enter for new line'
+            : 'Enter untuk kirim · Shift+Enter untuk baris baru'}
         </p>
       </div>
     </div>

@@ -1,114 +1,653 @@
-// src/hooks/useTranslation.ts
-// Custom hook for multi-language support
-// Usage: const { t, language, setLanguage } = useTranslation();
-
 import { useState, useEffect } from 'react';
 
-// ─── INLINE TYPES & CONFIG (No external import needed) ────────────────────
-export type Language = 'id' | 'en';
+type Language = 'id' | 'en';
 
 interface Translations {
-  common: { back: string; next: string; submit: string; reset: string; loading: string; done: string; };
-  nav: { home: string; world: string; battle: string; verse: string; badge: string; profile: string; };
+  common: {
+    back: string;
+    next: string;
+    submit: string;
+    reset: string;
+    loading: string;
+    save: string;
+    edit: string;
+    delete: string;
+    search: string;
+    cancel: string;
+    confirm: string;
+    close: string;
+    yes: string;
+    no: string;
+  };
+  nav: {
+    home: string;
+    world: string;
+    battle: string;
+    verse: string;
+    badge: string;
+    profile: string;
+    login: string;
+    logout: string;
+  };
+  landing: {
+    hero: {
+      title: string;
+      subtitle: string;
+      description: string;
+      ctaStart: string;
+      ctaLearn: string;
+    };
+    features: {
+      title: string;
+      world: {
+        title: string;
+        desc: string;
+      };
+      battle: {
+        title: string;
+        desc: string;
+      };
+      verse: {
+        title: string;
+        desc: string;
+      };
+      badge: {
+        title: string;
+        desc: string;
+      };
+    };
+    stats: {
+      provinces: string;
+      games: string;
+      users: string;
+    };
+    testimonials: {
+      title: string;
+    };
+    faq: {
+      title: string;
+    };
+    contact: {
+      title: string;
+      name: string;
+      email: string;
+      message: string;
+      send: string;
+    };
+  };
+  world: {
+    title: string;
+    subtitle: string;
+    search: string;
+    explore: string;
+    locked: string;
+    completed: string;
+    inProgress: string;
+    provinceInfo: string;
+  };
   quest: {
-    title: string; subtitle: string; activeProvince: string; noProvince: string;
-    backToMap: string; progressBadge: string; selectQuest: string; totalXP: string;
-    perProvince: string; questsCompleted: string; unlockBadge: string;
-    allComplete: string;
+    title: string;
+    subtitle: string;
+    province: string;
+    selectProvince: string;
+    badgeProgress: string;
+    gamesCompleted: string;
+    startGame: string;
+    continueGame: string;
+    playAgain: string;
+    finish: string;
+    questComplete: string;
+    xpEarned: string;
   };
   games: {
-    guessTheCulture: { title: string; description: string; xpLabel: string; };
-    memoryMatch: { title: string; description: string; xpLabel: string; };
-    cultureSwipe: { title: string; description: string; xpLabel: string; };
-    aksaraScramble: { title: string; description: string; xpLabel: string; };
+    guess: {
+      title: string;
+      desc: string;
+      xpLabel: string;
+    };
+    memory: {
+      title: string;
+      desc: string;
+      xpLabel: string;
+    };
+    swipe: {
+      title: string;
+      desc: string;
+      xpLabel: string;
+    };
+    aksara: {
+      title: string;
+      desc: string;
+      xpLabel: string;
+    };
+  };
+  chat: {
+    placeholder: string;
+    send: string;
+    thinking: string;
+    greeting: string;
+    example1: string;
+    example2: string;
+    example3: string;
+    example4: string;
+  };
+  profile: {
+    title: string;
+    subtitle: string;
+    level: string;
+    totalXP: string;
+    provinces: string;
+    badges: string;
+    streak: string;
+    editProfile: string;
+    logout: string;
+    badgeCollection: string;
+  };
+  auth: {
+    login: string;
+    register: string;
+    email: string;
+    password: string;
+    username: string;
+    forgotPassword: string;
+    noAccount: string;
+    hasAccount: string;
+    loginButton: string;
+    registerButton: string;
+  };
+  errors: {
+    generic: string;
+    network: string;
+    notFound: string;
+    unauthorized: string;
+    server: string;
+    validation: string;
+  };
+  stats: {
+    score: string;
+    moves: string;
+    time: string;
+    accuracy: string;
+    rank: string;
+    level: string;
+    xp: string;
+    badges: string;
+    completed: string;
+    inProgress: string;
+    locked: string;
   };
   gameStates: {
-    loading: string; aiPreparing: string; correct: string; wrong: string;
-    perfect: string; good: string; tryAgain: string; questComplete: string;
-    xpEarned: string; xpSaved: string; playAgain: string;
-    selectOtherGame: string; backToWorld: string;
+    loading: string;
+    ready: string;
+    playing: string;
+    paused: string;
+    finished: string;
+    correct: string;
+    wrong: string;
+    perfect: string;
+    goodJob: string;
+    tryAgain: string;
+    almostThere: string;
+    gameOver: string;
+    youWin: string;
+    newRecord: string;
   };
-  badges: { live: string; new: string; completed: string; };
+  badges: {
+    new: string;
+    live: string;
+    completed: string;
+    locked: string;
+    master: string;
+  };
   feedback: {
-    correct: string; incorrect: string; hint: string; tapToSelect: string;
-    swipeLeft: string; swipeRight: string; myth: string; fact: string;
+    correct: string;
+    incorrect: string;
+    hint: string;
+    swipeRight: string;
+    swipeLeft: string;
+    match: string;
+    noMatch: string;
+    excellent: string;
   };
-  stats: { score: string; total: string; moves: string; pairs: string; accuracy: string; timeLeft: string; question: string; card: string; word: string; };
 }
 
 const translations: Record<Language, Translations> = {
   id: {
-    common: { back: 'Kembali', next: 'Lanjut', submit: 'Kirim', reset: 'Reset', loading: 'Memuat', done: 'Selesai' },
-    nav: { home: 'Beranda', world: 'AxaraWorld', battle: 'AxaraBattle', verse: 'AxaraVerse', badge: 'AxaraBadge', profile: 'Profil' },
+    common: {
+      back: 'Kembali',
+      next: 'Lanjut',
+      submit: 'Kirim',
+      reset: 'Reset',
+      loading: 'Memuat...',
+      save: 'Simpan',
+      edit: 'Edit',
+      delete: 'Hapus',
+      search: 'Cari',
+      cancel: 'Batal',
+      confirm: 'Konfirmasi',
+      close: 'Tutup',
+      yes: 'Ya',
+      no: 'Tidak',
+    },
+    nav: {
+      home: 'Beranda',
+      world: 'Dunia',
+      battle: 'Pertempuran',
+      verse: 'Cerita',
+      badge: 'Lencana',
+      profile: 'Profil',
+      login: 'Masuk',
+      logout: 'Keluar',
+    },
+    landing: {
+      hero: {
+        title: 'Jelajahi Budaya Abadi Nusantara',
+        subtitle: 'Petualangan Budaya',
+        description: 'AXARA adalah platform gamifikasi di mana Anda menjelajahi budaya Indonesia melalui peta interaktif, quest, dan cerita berbasis AI.',
+        ctaStart: 'Mulai Menjelajah',
+        ctaLearn: 'Lihat Fitur',
+      },
+      features: {
+        title: 'Petualangan Budaya Interaktif',
+        world: {
+          title: 'AxaraWorld — Peta Eksplorasi',
+          desc: 'Buka peta Indonesia, klik provinsi, dan temukan budaya seperti rumah adat, makanan, pakaian, alat musik, hingga sejarah singkat.',
+        },
+        battle: {
+          title: 'AxaraBattle — Mini Games',
+          desc: 'Uji pengetahuanmu di 4 game seru: Culture Memory Match, Guess The Culture, Province Puzzle, dan Aksara Scramble.',
+        },
+        verse: {
+          title: 'AxaraVerse — Cerita AI',
+          desc: 'Tanya AI tentang sejarah budaya atau mainkan mode "Story Adventure" di mana kamu menjadi karakter cerita interaktif.',
+        },
+        badge: {
+          title: 'AxaraBadge — Sistem Progress',
+          desc: 'Kumpulkan XP dari menjelajah provinsi, menyelesaikan game, dan membaca budaya. Koleksi badge dari seluruh Nusantara!',
+        },
+      },
+      stats: {
+        provinces: 'Provinsi',
+        games: 'Game',
+        users: 'Pengguna',
+      },
+      testimonials: {
+        title: 'Kata Penjelajah',
+      },
+      faq: {
+        title: 'Pertanyaan yang Sering Diajukan',
+      },
+      contact: {
+        title: 'Hubungi Kami',
+        name: 'Nama Anda',
+        email: 'Email Anda',
+        message: 'Pesan Anda',
+        send: 'Kirim Pesan',
+      },
+    },
+    world: {
+      title: 'AXARA WORLD',
+      subtitle: 'Jelajahi Nusantara',
+      search: 'Cari provinsi...',
+      explore: 'Jelajahi',
+      locked: 'Terkunci',
+      completed: 'Selesai',
+      inProgress: 'Saat Ini',
+      provinceInfo: 'Info Provinsi',
+    },
     quest: {
-      title: 'AXARA BATTLE', subtitle: 'Taklukkan Nusantara', activeProvince: 'Provinsi Aktif',
-      noProvince: 'Belum ada provinsi', backToMap: 'Kembali ke AxaraWorld untuk memilih!',
-      progressBadge: 'Progress Badge Master', selectQuest: 'Pilih Quest', totalXP: 'Total maks',
-      perProvince: 'per provinsi', questsCompleted: 'Quest', unlockBadge: 'quest lagi untuk unlock Badge Master',
-      allComplete: 'Semua quest selesai! Badge Master sudah kamu raih!',
+      title: 'QUEST BUDAYA',
+      subtitle: 'Petualangan Nusantara',
+      province: 'Provinsi',
+      selectProvince: 'Pilih Provinsi',
+      badgeProgress: 'Progress Badge',
+      gamesCompleted: 'Game Selesai',
+      startGame: 'Mulai Game',
+      continueGame: 'Lanjutkan',
+      playAgain: 'Main Lagi',
+      finish: 'Selesai',
+      questComplete: 'Quest Selesai!',
+      xpEarned: 'XP Didapat',
     },
     games: {
-      guessTheCulture: { title: 'Guess The Culture', description: 'Tebak budaya, makanan & tradisi lewat pertanyaan interaktif dari AI.', xpLabel: '+50 XP / soal' },
-      memoryMatch: { title: 'Memory Match', description: 'Cocokkan pasangan budaya daerah dengan tepat dan secepat mungkin!', xpLabel: '+30 XP / pasang' },
-      cultureSwipe: { title: 'Culture Swipe', description: 'Swipe kartu budaya: Mitos atau Fakta? Lebih seru dari Quizizz!', xpLabel: '+25 XP / kartu' },
-      aksaraScramble: { title: 'Aksara Scramble', description: 'Susun huruf acak jadi nama budaya! Tebak dari clue AI yang diberikan.', xpLabel: '+15 XP / kata' },
+      guess: {
+        title: 'Tebak Budaya',
+        desc: 'Tebak nama budaya dari gambar yang ditampilkan',
+        xpLabel: '125 XP',
+      },
+      memory: {
+        title: 'Kartu Memori',
+        desc: 'Cocokkan pasangan kartu budaya yang sama',
+        xpLabel: '125 XP',
+      },
+      swipe: {
+        title: 'Geser Provinsi',
+        desc: 'Geser kartu ke provinsi yang benar',
+        xpLabel: '150 XP',
+      },
+      aksara: {
+        title: 'Susun Aksara',
+        desc: 'Susun huruf aksara menjadi kata yang benar',
+        xpLabel: '125 XP',
+      },
+    },
+    chat: {
+      placeholder: 'Tanya tentang budaya Indonesia...',
+      send: 'Kirim',
+      thinking: 'Berpikir...',
+      greeting: 'Halo! Tanya aku tentang budaya Indonesia.',
+      example1: 'Ceritakan tentang Borobudur',
+      example2: 'Apa makanan khas Jawa Barat?',
+      example3: 'Jelaskan filosofi batik',
+      example4: 'Sejarah Wayang Kulit',
+    },
+    profile: {
+      title: 'PROFIL KU',
+      subtitle: 'Petualang Nusantara',
+      level: 'Level',
+      totalXP: 'Total XP',
+      provinces: 'Provinsi',
+      badges: 'Badges',
+      streak: 'Streak',
+      editProfile: 'Edit Profil',
+      logout: 'Keluar',
+      badgeCollection: 'Koleksi Badge',
+    },
+    auth: {
+      login: 'Masuk',
+      register: 'Daftar',
+      email: 'Email',
+      password: 'Password',
+      username: 'Username',
+      forgotPassword: 'Lupa Password?',
+      noAccount: 'Belum punya akun?',
+      hasAccount: 'Sudah punya akun?',
+      loginButton: 'Masuk',
+      registerButton: 'Daftar',
+    },
+    errors: {
+      generic: 'Terjadi kesalahan',
+      network: 'Koneksi internet bermasalah',
+      notFound: 'Tidak ditemukan',
+      unauthorized: 'Tidak memiliki akses',
+      server: 'Server bermasalah',
+      validation: 'Data tidak valid',
+    },
+    stats: {
+      score: 'Skor',
+      moves: 'Langkah',
+      time: 'Waktu',
+      accuracy: 'Akurasi',
+      rank: 'Peringkat',
+      level: 'Level',
+      xp: 'XP',
+      badges: 'Badge',
+      completed: 'Selesai',
+      inProgress: 'Sedang Berjalan',
+      locked: 'Terkunci',
     },
     gameStates: {
-      loading: 'Memuat...', aiPreparing: 'AI Menyiapkan Soal', correct: 'Luar Biasa!', wrong: 'Kurang Tepat!',
-      perfect: 'SEMPURNA!', good: 'BAGUS!', tryAgain: 'COBA LAGI!', questComplete: 'Quest Selesai',
-      xpEarned: 'XP Diperoleh', xpSaved: 'XP sudah tersimpan ke profil', playAgain: 'Main Lagi',
-      selectOtherGame: 'Pilih Game Lain', backToWorld: 'Kembali ke AxaraWorld',
+      loading: 'Memuat game...',
+      ready: 'Siap!',
+      playing: 'Bermain',
+      paused: 'Dijeda',
+      finished: 'Selesai',
+      correct: 'Benar!',
+      wrong: 'Salah!',
+      perfect: 'Sempurna!',
+      goodJob: 'Bagus!',
+      tryAgain: 'Coba Lagi',
+      almostThere: 'Hampir!',
+      gameOver: 'Game Berakhir',
+      youWin: 'Kamu Menang!',
+      newRecord: 'Rekor Baru!',
     },
-    badges: { live: 'Live', new: 'NEW', completed: 'Selesai' },
-    feedback: { correct: 'Benar!', incorrect: 'Salah!', hint: 'Petunjuk', tapToSelect: 'Tap huruf untuk menyusun', swipeLeft: 'Mitos', swipeRight: 'Fakta', myth: 'MITOS', fact: 'FAKTA' },
-    stats: { score: 'Skor', total: 'Total', moves: 'Langkah', pairs: 'Pasang', accuracy: 'Akurasi', timeLeft: 'Waktu', question: 'Soal', card: 'Kartu', word: 'Kata' },
+    badges: {
+      new: 'Baru',
+      live: 'Aktif',
+      completed: 'Selesai',
+      locked: 'Terkunci',
+      master: 'Master',
+    },
+    feedback: {
+      correct: 'Jawaban benar!',
+      incorrect: 'Coba lagi!',
+      hint: 'Petunjuk',
+      swipeRight: 'Geser kanan jika benar',
+      swipeLeft: 'Geser kiri jika salah',
+      match: 'Cocok!',
+      noMatch: 'Tidak cocok',
+      excellent: 'Luar biasa!',
+    },
   },
   en: {
-    common: { back: 'Back', next: 'Next', submit: 'Submit', reset: 'Reset', loading: 'Loading', done: 'Done' },
-    nav: { home: 'Home', world: 'AxaraWorld', battle: 'AxaraBattle', verse: 'AxaraVerse', badge: 'AxaraBadge', profile: 'Profile' },
+    common: {
+      back: 'Back',
+      next: 'Next',
+      submit: 'Submit',
+      reset: 'Reset',
+      loading: 'Loading...',
+      save: 'Save',
+      edit: 'Edit',
+      delete: 'Delete',
+      search: 'Search',
+      cancel: 'Cancel',
+      confirm: 'Confirm',
+      close: 'Close',
+      yes: 'Yes',
+      no: 'No',
+    },
+    nav: {
+      home: 'Home',
+      world: 'World',
+      battle: 'Battle',
+      verse: 'Verse',
+      badge: 'Badge',
+      profile: 'Profile',
+      login: 'Login',
+      logout: 'Logout',
+    },
+    landing: {
+      hero: {
+        title: 'Explore the Eternal Culture of Nusantara',
+        subtitle: 'Cultural Adventure',
+        description: 'AXARA is a gamification platform where you explore Indonesian culture through interactive maps, quests, and AI-powered stories.',
+        ctaStart: 'Start Exploring',
+        ctaLearn: 'Learn More',
+      },
+      features: {
+        title: 'Interactive Cultural Adventure',
+        world: {
+          title: 'AxaraWorld — Exploration Map',
+          desc: 'Open the Indonesia map, click on provinces, and discover cultures like traditional houses, food, clothing, musical instruments, and brief history.',
+        },
+        battle: {
+          title: 'AxaraBattle — Mini Games',
+          desc: 'Test your knowledge in 4 fun games: Culture Memory Match, Guess The Culture, Province Puzzle, and Aksara Scramble.',
+        },
+        verse: {
+          title: 'AxaraVerse — AI Story',
+          desc: 'Ask AI about cultural history or play "Story Adventure" mode where you become a character in an interactive story.',
+        },
+        badge: {
+          title: 'AxaraBadge — Progress System',
+          desc: 'Collect XP from exploring provinces, completing games, and learning about culture. Collect badges from all of Nusantara!',
+        },
+      },
+      stats: {
+        provinces: 'Provinces',
+        games: 'Games',
+        users: 'Users',
+      },
+      testimonials: {
+        title: 'Explorer Stories',
+      },
+      faq: {
+        title: 'Frequently Asked Questions',
+      },
+      contact: {
+        title: 'Contact Us',
+        name: 'Your Name',
+        email: 'Your Email',
+        message: 'Your Message',
+        send: 'Send Message',
+      },
+    },
+    world: {
+      title: 'AXARA WORLD',
+      subtitle: 'Explore Nusantara',
+      search: 'Search province...',
+      explore: 'Explore',
+      locked: 'Locked',
+      completed: 'Completed',
+      inProgress: 'In Progress',
+      provinceInfo: 'Province Info',
+    },
     quest: {
-      title: 'AXARA BATTLE', subtitle: 'Conquer Nusantara', activeProvince: 'Active Province',
-      noProvince: 'No province selected', backToMap: 'Return to AxaraWorld to select!',
-      progressBadge: 'Master Badge Progress', selectQuest: 'Select Quest', totalXP: 'Max total',
-      perProvince: 'per province', questsCompleted: 'Quests', unlockBadge: 'more quests to unlock Master Badge',
-      allComplete: 'All quests completed! Master Badge earned!',
+      title: 'CULTURE QUEST',
+      subtitle: 'Nusantara Adventure',
+      province: 'Province',
+      selectProvince: 'Select Province',
+      badgeProgress: 'Badge Progress',
+      gamesCompleted: 'Games Completed',
+      startGame: 'Start Game',
+      continueGame: 'Continue',
+      playAgain: 'Play Again',
+      finish: 'Finish',
+      questComplete: 'Quest Complete!',
+      xpEarned: 'XP Earned',
     },
     games: {
-      guessTheCulture: { title: 'Guess The Culture', description: 'Guess culture, food & traditions through interactive AI questions.', xpLabel: '+50 XP / question' },
-      memoryMatch: { title: 'Memory Match', description: 'Match regional culture pairs accurately and as fast as possible!', xpLabel: '+30 XP / pair' },
-      cultureSwipe: { title: 'Culture Swipe', description: 'Swipe culture cards: Myth or Fact? More fun than Quizizz!', xpLabel: '+25 XP / card' },
-      aksaraScramble: { title: 'Aksara Scramble', description: 'Arrange scrambled letters into culture names! Guess from AI clues.', xpLabel: '+15 XP / word' },
+      guess: {
+        title: 'Guess The Culture',
+        desc: 'Guess the culture name from the displayed image',
+        xpLabel: '125 XP',
+      },
+      memory: {
+        title: 'Memory Cards',
+        desc: 'Match pairs of the same culture cards',
+        xpLabel: '125 XP',
+      },
+      swipe: {
+        title: 'Province Swipe',
+        desc: 'Swipe cards to the correct province',
+        xpLabel: '150 XP',
+      },
+      aksara: {
+        title: 'Aksara Scramble',
+        desc: 'Arrange aksara letters into the correct word',
+        xpLabel: '125 XP',
+      },
+    },
+    chat: {
+      placeholder: 'Ask about Indonesian culture...',
+      send: 'Send',
+      thinking: 'Thinking...',
+      greeting: 'Hello! Ask me about Indonesian culture.',
+      example1: 'Tell me about Borobudur',
+      example2: 'What is West Java\'s signature food?',
+      example3: 'Explain batik philosophy',
+      example4: 'Wayang Kulit history',
+    },
+    profile: {
+      title: 'MY PROFILE',
+      subtitle: 'Nusantara Explorer',
+      level: 'Level',
+      totalXP: 'Total XP',
+      provinces: 'Provinces',
+      badges: 'Badges',
+      streak: 'Streak',
+      editProfile: 'Edit Profile',
+      logout: 'Logout',
+      badgeCollection: 'Badge Collection',
+    },
+    auth: {
+      login: 'Login',
+      register: 'Register',
+      email: 'Email',
+      password: 'Password',
+      username: 'Username',
+      forgotPassword: 'Forgot Password?',
+      noAccount: 'Don\'t have an account?',
+      hasAccount: 'Already have an account?',
+      loginButton: 'Login',
+      registerButton: 'Register',
+    },
+    errors: {
+      generic: 'An error occurred',
+      network: 'Network connection problem',
+      notFound: 'Not found',
+      unauthorized: 'Unauthorized access',
+      server: 'Server error',
+      validation: 'Invalid data',
+    },
+    stats: {
+      score: 'Score',
+      moves: 'Moves',
+      time: 'Time',
+      accuracy: 'Accuracy',
+      rank: 'Rank',
+      level: 'Level',
+      xp: 'XP',
+      badges: 'Badges',
+      completed: 'Completed',
+      inProgress: 'In Progress',
+      locked: 'Locked',
     },
     gameStates: {
-      loading: 'Loading...', aiPreparing: 'AI Preparing Questions', correct: 'Awesome!', wrong: 'Not Quite!',
-      perfect: 'PERFECT!', good: 'GOOD JOB!', tryAgain: 'TRY AGAIN!', questComplete: 'Quest Complete',
-      xpEarned: 'XP Earned', xpSaved: 'XP saved to profile', playAgain: 'Play Again',
-      selectOtherGame: 'Select Other Game', backToWorld: 'Back to AxaraWorld',
+      loading: 'Loading game...',
+      ready: 'Ready!',
+      playing: 'Playing',
+      paused: 'Paused',
+      finished: 'Finished',
+      correct: 'Correct!',
+      wrong: 'Wrong!',
+      perfect: 'Perfect!',
+      goodJob: 'Good Job!',
+      tryAgain: 'Try Again',
+      almostThere: 'Almost!',
+      gameOver: 'Game Over',
+      youWin: 'You Win!',
+      newRecord: 'New Record!',
     },
-    badges: { live: 'Live', new: 'NEW', completed: 'Completed' },
-    feedback: { correct: 'Correct!', incorrect: 'Wrong!', hint: 'Hint', tapToSelect: 'Tap letters to arrange', swipeLeft: 'Myth', swipeRight: 'Fact', myth: 'MYTH', fact: 'FACT' },
-    stats: { score: 'Score', total: 'Total', moves: 'Moves', pairs: 'Pairs', accuracy: 'Accuracy', timeLeft: 'Time', question: 'Question', card: 'Card', word: 'Word' },
+    badges: {
+      new: 'New',
+      live: 'Live',
+      completed: 'Completed',
+      locked: 'Locked',
+      master: 'Master',
+    },
+    feedback: {
+      correct: 'Correct answer!',
+      incorrect: 'Try again!',
+      hint: 'Hint',
+      swipeRight: 'Swipe right if correct',
+      swipeLeft: 'Swipe left if wrong',
+      match: 'Match!',
+      noMatch: 'No match',
+      excellent: 'Excellent!',
+    },
   },
 };
 
-const DEFAULT_LANGUAGE: Language = 'id';
-const LANGUAGE_STORAGE_KEY = 'axara_language';
-
-// ─── HOOK ──────────────────────────────────────────────────────────────────
-export const useTranslation = () => {
-  const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-    return (saved === 'id' || saved === 'en') ? saved : DEFAULT_LANGUAGE;
+export function useTranslation() {
+  const [language, setLanguage] = useState<Language>(() => {
+    const saved = localStorage.getItem('axara_language');
+    return (saved === 'en' || saved === 'id') ? saved : 'id';
   });
 
   useEffect(() => {
-    localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+    localStorage.setItem('axara_language', language);
   }, [language]);
 
-  const setLanguage = (lang: Language) => setLanguageState(lang);
-  const toggleLanguage = () => setLanguageState(prev => prev === 'id' ? 'en' : 'id');
+  const toggleLanguage = () => {
+    setLanguage(prev => prev === 'id' ? 'en' : 'id');
+  };
 
-  const t: Translations = translations[language];
-
-  return { t, language, setLanguage, toggleLanguage };
-};
+  return {
+    t: translations[language],
+    language,
+    setLanguage,
+    toggleLanguage,
+  };
+}

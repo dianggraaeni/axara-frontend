@@ -8,6 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { useUserStats, useUserBadges } from '../hooks/useBackendData';
 import { usersService } from '../services/users.service';
+import { useTranslation } from '../hooks/useTranslation'; // ✨ ADDED
+import LanguageSwitcher from '../components/LanguageSwitcher'; // ✨ ADDED
 
 // ─── Press-down button handlers (sama persis dengan Map.tsx) ──────────────
 const pressHandlers = {
@@ -25,17 +27,36 @@ const pressHandlers = {
   },
 };
 
-// ─── XP rank titles ───────────────────────────────────────────────────────
-function getRankTitle(level: number): { title: string; icon: string } {
-  if (level >= 34) return { title: 'Penjelajah Agung', icon: '👑' };
-  if (level >= 26) return { title: 'Petualang Legendaris', icon: '🌟' };
-  if (level >= 18) return { title: 'Penjelajah Ulung', icon: '⚔️' };
-  if (level >= 10) return { title: 'Petualang Madya', icon: '🗡️' };
-  if (level >= 5)  return { title: 'Penjelajah Muda', icon: '🧭' };
-  return { title: 'Petualang Pemula', icon: '🌱' };
+// ─── XP rank titles ─────────────────────────────────────────────────────── ✨ UPDATED
+function getRankTitle(level: number, isEnglish: boolean): { title: string; icon: string } {
+  if (level >= 34) return { 
+    title: isEnglish ? 'Grand Explorer' : 'Penjelajah Agung', 
+    icon: '👑' 
+  };
+  if (level >= 26) return { 
+    title: isEnglish ? 'Legendary Adventurer' : 'Petualang Legendaris', 
+    icon: '🌟' 
+  };
+  if (level >= 18) return { 
+    title: isEnglish ? 'Expert Explorer' : 'Penjelajah Ulung', 
+    icon: '⚔️' 
+  };
+  if (level >= 10) return { 
+    title: isEnglish ? 'Intermediate Adventurer' : 'Petualang Madya', 
+    icon: '🗡️' 
+  };
+  if (level >= 5) return { 
+    title: isEnglish ? 'Young Explorer' : 'Penjelajah Muda', 
+    icon: '🧭' 
+  };
+  return { 
+    title: isEnglish ? 'Novice Adventurer' : 'Petualang Pemula', 
+    icon: '🌱' 
+  };
 }
 
 export default function ProfilePage() {
+  const { t } = useTranslation(); // ✨ ADDED
   const { user, logout, updateUser } = useAuth();
   const { stats, isLoading: statsLoading, refetch: refetchStats } = useUserStats();
   const { badges, isLoading: badgesLoading } = useUserBadges();
@@ -56,7 +77,7 @@ export default function ProfilePage() {
       await refetchStats();
       setIsEditing(false);
     } catch (e: any) {
-      setSaveError(e?.response?.data?.error ?? 'Gagal menyimpan profil.');
+      setSaveError(e?.response?.data?.error ?? (t.profile.subtitle.includes('Explorer') ? 'Failed to save profile.' : 'Gagal menyimpan profil.'));
     } finally {
       setIsSaving(false);
     }
@@ -69,11 +90,11 @@ export default function ProfilePage() {
       const result = await usersService.uploadAvatar(file);
       updateUser({ avatarUrl: result.avatarUrl });
     } catch (e: any) {
-      alert(e?.response?.data?.error ?? 'Gagal upload avatar.');
+      alert(e?.response?.data?.error ?? (t.profile.subtitle.includes('Explorer') ? 'Failed to upload avatar.' : 'Gagal upload avatar.'));
     }
   };
 
-  const name              = user?.username ?? 'Petualang';
+  const name              = user?.username ?? (t.profile.subtitle.includes('Explorer') ? 'Explorer' : 'Petualang');
   const avatarUrl         = user?.avatarUrl;
   const xp                = stats?.xp ?? user?.xp ?? 0;
   const level             = stats?.level ?? user?.level ?? 1;
@@ -83,7 +104,7 @@ export default function ProfilePage() {
   const provincesUnlocked = stats?.provincesUnlocked ?? 0;
   const provincesCompleted= stats?.provincesCompleted ?? 0;
   const badgeCount        = stats?.badges ?? badges.length;
-  const rank              = getRankTitle(level);
+  const rank              = getRankTitle(level, t.profile.subtitle.includes('Explorer')); // ✨ UPDATED
 
   return (
     <div
@@ -111,16 +132,20 @@ export default function ProfilePage() {
               <User size={18} className="text-white" strokeWidth={3} />
             </div>
             <div>
+              {/* ✨ TRANSLATED */}
               <h1 className="text-2xl font-black leading-none" style={{ color: '#1a0f0a' }}>
-                PROFIL <span style={{ color: '#F14C38' }}>KU</span>
+                {t.profile.title.split(' ')[0]} <span style={{ color: '#F14C38' }}>{t.profile.title.split(' ')[1] || 'PROFILE'}</span>
               </h1>
               <p className="text-[9px] font-black tracking-widest uppercase leading-none mt-0.5" style={{ color: '#F14C38' }}>
-                Petualang Nusantara
+                {t.profile.subtitle}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* ✨ Language Switcher */}
+            <LanguageSwitcher variant="minimal" />
+            
             {!isEditing && (
               <button
                 onClick={() => { setIsEditing(true); setEditName(name); }}
@@ -132,7 +157,7 @@ export default function ProfilePage() {
                 }}
                 {...pressHandlers}
               >
-                <Edit2 size={14} strokeWidth={3} /> Edit
+                <Edit2 size={14} strokeWidth={3} /> {t.common.edit}
               </button>
             )}
             <button
@@ -145,7 +170,7 @@ export default function ProfilePage() {
               }}
               {...pressHandlers}
             >
-              <LogOut size={14} strokeWidth={3} /> Keluar
+              <LogOut size={14} strokeWidth={3} /> {t.profile.logout}
             </button>
           </div>
         </motion.header>
@@ -189,7 +214,10 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl"
                   style={{ background: '#1a0f0a', border: '2px solid #FBBF24' }}>
                   <Flame size={14} className="text-yellow-400" strokeWidth={3} />
-                  <span className="text-sm font-black text-white">{streakDays} hari</span>
+                  {/* ✨ TRANSLATED */}
+                  <span className="text-sm font-black text-white">
+                    {streakDays} {t.profile.subtitle.includes('Explorer') ? 'days' : 'hari'}
+                  </span>
                 </div>
               )}
             </div>
@@ -222,11 +250,14 @@ export default function ProfilePage() {
               {/* XP Progress */}
               <div className="flex-1 pt-12">
                 <div className="flex items-center justify-between mb-1.5">
+                  {/* ✨ TRANSLATED */}
                   <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: 'rgba(26,15,10,0.45)' }}>
-                    EXP ke Level {level + 1}
+                    {t.profile.subtitle.includes('Explorer') ? `EXP to Level ${level + 1}` : `EXP ke Level ${level + 1}`}
                   </span>
                   <span className="text-[10px] font-black" style={{ color: '#F14C38' }}>
-                    {xpToNext > 0 ? `${xpToNext} XP lagi` : 'MAX!'}
+                    {xpToNext > 0 
+                      ? (t.profile.subtitle.includes('Explorer') ? `${xpToNext} XP more` : `${xpToNext} XP lagi`)
+                      : 'MAX!'}
                   </span>
                 </div>
                 <div className="h-4 rounded-full overflow-hidden"
@@ -240,8 +271,9 @@ export default function ProfilePage() {
                   />
                 </div>
                 <div className="text-right mt-1">
+                  {/* ✨ TRANSLATED */}
                   <span className="text-[9px] font-black uppercase" style={{ color: 'rgba(26,15,10,0.35)' }}>
-                    {xp} XP Total
+                    {xp} {t.profile.subtitle.includes('Explorer') ? 'Total XP' : 'XP Total'}
                   </span>
                 </div>
               </div>
@@ -264,8 +296,9 @@ export default function ProfilePage() {
                 style={{ background: '#FBBF24', borderBottom: '4px solid #1a0f0a' }}>
                 <div className="flex items-center gap-2">
                   <Edit2 size={16} strokeWidth={3} style={{ color: '#1a0f0a' }} />
+                  {/* ✨ TRANSLATED */}
                   <span className="font-black uppercase tracking-widest text-sm" style={{ color: '#1a0f0a' }}>
-                    Edit Profil
+                    {t.profile.editProfile}
                   </span>
                 </div>
                 <button
@@ -298,15 +331,19 @@ export default function ProfilePage() {
                     </div>
                     <input type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
                   </label>
+                  {/* ✨ TRANSLATED */}
                   <p className="text-xs font-bold" style={{ color: 'rgba(26,15,10,0.5)' }}>
-                    Klik foto untuk<br />upload avatar baru
+                    {t.profile.subtitle.includes('Explorer') 
+                      ? 'Click photo to upload new avatar'
+                      : 'Klik foto untuk upload avatar baru'}
                   </p>
                 </div>
 
                 {/* Username */}
                 <div>
+                  {/* ✨ TRANSLATED */}
                   <label className="block text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: '#F14C38' }}>
-                    Username
+                    {t.profile.subtitle.includes('Explorer') ? 'Username' : 'Username'}
                   </label>
                   <div className="relative">
                     <User size={14} strokeWidth={3} className="absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'rgba(26,15,10,0.35)' }} />
@@ -326,8 +363,9 @@ export default function ProfilePage() {
 
                 {/* Gender */}
                 <div>
+                  {/* ✨ TRANSLATED */}
                   <label className="block text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: '#F14C38' }}>
-                    Gender
+                    {t.profile.subtitle.includes('Explorer') ? 'Gender' : 'Gender'}
                   </label>
                   <div className="flex gap-3">
                     {(['male', 'female'] as const).map((g) => (
@@ -342,7 +380,10 @@ export default function ProfilePage() {
                           boxShadow: editGender === g ? '3px 3px 0 #1a0f0a' : '1px 1px 0 rgba(26,15,10,0.1)',
                         }}
                       >
-                        {g === 'male' ? '👦 Laki-laki' : '👧 Perempuan'}
+                        {/* ✨ TRANSLATED */}
+                        {g === 'male' 
+                          ? (t.profile.subtitle.includes('Explorer') ? '👦 Male' : '👦 Laki-laki')
+                          : (t.profile.subtitle.includes('Explorer') ? '👧 Female' : '👧 Perempuan')}
                       </button>
                     ))}
                   </div>
@@ -361,7 +402,8 @@ export default function ProfilePage() {
                     className="flex-1 py-3 rounded-2xl font-black text-sm uppercase"
                     style={{ background: 'white', color: 'rgba(26,15,10,0.45)', border: '3px solid rgba(26,15,10,0.15)', transition: 'all 0.1s' }}
                   >
-                    Batal
+                    {/* ✨ TRANSLATED */}
+                    {t.profile.subtitle.includes('Explorer') ? 'Cancel' : 'Batal'}
                   </button>
                   <button
                     onClick={handleSave}
@@ -377,7 +419,10 @@ export default function ProfilePage() {
                     {isSaving
                       ? <Loader2 size={15} className="animate-spin" strokeWidth={3} />
                       : <Check size={15} strokeWidth={3} />}
-                    {isSaving ? 'Menyimpan...' : 'Simpan'}
+                    {/* ✨ TRANSLATED */}
+                    {isSaving 
+                      ? (t.profile.subtitle.includes('Explorer') ? 'Saving...' : 'Menyimpan...')
+                      : (t.profile.subtitle.includes('Explorer') ? 'Save' : 'Simpan')}
                   </button>
                 </div>
               </div>
@@ -392,11 +437,12 @@ export default function ProfilePage() {
           transition={{ delay: 0.12 }}
           className="grid grid-cols-2 md:grid-cols-4 gap-3"
         >
+          {/* ✨ TRANSLATED */}
           {[
-            { icon: <Star size={20} strokeWidth={3} />, label: 'Level',     value: level,     accent: '#FBBF24', emoji: '⭐' },
-            { icon: <Zap  size={20} strokeWidth={3} />, label: 'Total XP',  value: xp,        accent: '#F14C38', emoji: '⚡' },
-            { icon: <MapPin size={20} strokeWidth={3}/>, label: 'Provinsi', value: `${provincesCompleted}/${provincesUnlocked}`, accent: '#F14C38', emoji: '🗺️' },
-            { icon: <Shield size={20} strokeWidth={3}/>, label: 'Badges',   value: badgeCount, accent: '#1a0f0a', emoji: '🛡️' },
+            { icon: <Star size={20} strokeWidth={3} />, label: t.profile.level, value: level, accent: '#FBBF24', emoji: '⭐' },
+            { icon: <Zap  size={20} strokeWidth={3} />, label: t.profile.totalXP, value: xp, accent: '#F14C38', emoji: '⚡' },
+            { icon: <MapPin size={20} strokeWidth={3}/>, label: t.profile.provinces, value: `${provincesCompleted}/${provincesUnlocked}`, accent: '#F14C38', emoji: '🗺️' },
+            { icon: <Shield size={20} strokeWidth={3}/>, label: t.profile.badges, value: badgeCount, accent: '#1a0f0a', emoji: '🛡️' },
           ].map((s, i) => (
             <motion.div
               key={s.label}
@@ -434,11 +480,12 @@ export default function ProfilePage() {
               <Award size={16} className="text-white" strokeWidth={3} />
             </div>
             <div>
+              {/* ✨ TRANSLATED */}
               <h2 className="text-lg font-black uppercase leading-none" style={{ color: '#1a0f0a' }}>
-                Koleksi Badge
+                {t.profile.badgeCollection}
               </h2>
               <p className="text-[9px] font-black uppercase tracking-widest leading-none mt-0.5" style={{ color: '#F14C38' }}>
-                {badgeCount} badge diraih
+                {badgeCount} {t.profile.subtitle.includes('Explorer') ? 'badges earned' : 'badge diraih'}
               </p>
             </div>
           </div>
@@ -447,8 +494,9 @@ export default function ProfilePage() {
             <div className="flex justify-center py-12">
               <div className="flex flex-col items-center gap-3">
                 <Loader2 size={32} className="animate-spin" style={{ color: '#F14C38' }} strokeWidth={3} />
+                {/* ✨ TRANSLATED */}
                 <span className="text-xs font-black uppercase tracking-wider" style={{ color: 'rgba(26,15,10,0.4)' }}>
-                  Memuat badge...
+                  {t.profile.subtitle.includes('Explorer') ? 'Loading badges...' : 'Memuat badge...'}
                 </span>
               </div>
             </div>
@@ -459,11 +507,14 @@ export default function ProfilePage() {
                 border: '4px dashed rgba(26,15,10,0.15)',
               }}>
               <div className="text-5xl mb-3">🏆</div>
+              {/* ✨ TRANSLATED */}
               <p className="font-black text-base uppercase" style={{ color: 'rgba(26,15,10,0.4)' }}>
-                Belum ada badge
+                {t.profile.subtitle.includes('Explorer') ? 'No badges yet' : 'Belum ada badge'}
               </p>
               <p className="text-xs font-bold mt-1" style={{ color: 'rgba(26,15,10,0.3)' }}>
-                Selesaikan quest di AxaraWorld untuk mendapatkan badge!
+                {t.profile.subtitle.includes('Explorer') 
+                  ? 'Complete quests in AxaraWorld to earn badges!'
+                  : 'Selesaikan quest di AxaraWorld untuk mendapatkan badge!'}
               </p>
             </div>
           ) : (
@@ -531,7 +582,10 @@ export default function ProfilePage() {
               {/* Modal top bar */}
               <div className="px-6 py-4 flex items-center justify-between"
                 style={{ background: '#F14C38', borderBottom: '4px solid #1a0f0a' }}>
-                <span className="font-black uppercase tracking-widest text-sm text-white">Konfirmasi Keluar</span>
+                {/* ✨ TRANSLATED */}
+                <span className="font-black uppercase tracking-widest text-sm text-white">
+                  {t.profile.subtitle.includes('Explorer') ? 'Confirm Logout' : 'Konfirmasi Keluar'}
+                </span>
                 <button
                   onClick={() => setShowLogoutConfirm(false)}
                   className="w-8 h-8 flex items-center justify-center rounded-xl"
@@ -543,11 +597,14 @@ export default function ProfilePage() {
               <div className="p-6 text-center space-y-5">
                 <div className="text-5xl">😢</div>
                 <div>
+                  {/* ✨ TRANSLATED */}
                   <p className="font-black text-lg uppercase" style={{ color: '#1a0f0a' }}>
-                    Yakin ingin keluar?
+                    {t.profile.subtitle.includes('Explorer') ? 'Are you sure you want to logout?' : 'Yakin ingin keluar?'}
                   </p>
                   <p className="text-sm font-bold mt-1" style={{ color: 'rgba(26,15,10,0.5)' }}>
-                    Petualanganmu akan ditinggalkan sementara...
+                    {t.profile.subtitle.includes('Explorer') 
+                      ? 'Your adventure will be paused for a while...'
+                      : 'Petualanganmu akan ditinggalkan sementara...'}
                   </p>
                 </div>
 
@@ -561,7 +618,8 @@ export default function ProfilePage() {
                       transition: 'all 0.1s'
                     }}
                   >
-                    Batal
+                    {/* ✨ TRANSLATED */}
+                    {t.profile.subtitle.includes('Explorer') ? 'Cancel' : 'Batal'}
                   </button>
                   <button
                     onClick={async () => { setShowLogoutConfirm(false); await logout(); }}
@@ -574,7 +632,8 @@ export default function ProfilePage() {
                     }}
                     {...pressHandlers}
                   >
-                    <LogOut size={14} strokeWidth={3} /> Keluar
+                    {/* ✨ TRANSLATED */}
+                    <LogOut size={14} strokeWidth={3} /> {t.profile.logout}
                   </button>
                 </div>
               </div>
