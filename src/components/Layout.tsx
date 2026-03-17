@@ -1,7 +1,7 @@
 // src/components/Layout.tsx
 import { ReactNode } from 'react';
 import { Link, useLocation, Navigate } from 'react-router-dom';
-import { Map, Swords, MessageCircle, User, Loader2, Zap } from 'lucide-react';
+import { Map, Swords, MessageCircle, User, Loader2, Zap, Newspaper } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useAuth } from '../context/AuthContext';
 import { useUserStats } from '../hooks/useBackendData';
@@ -10,6 +10,7 @@ const navItems = [
   { path: '/app',         label: 'AxaraWorld',  shortLabel: 'World',  icon: Map,           emoji: '🗺️' },
   { path: '/app/quest',   label: 'AxaraBattle', shortLabel: 'Battle', icon: Swords,        emoji: '⚔️' },
   { path: '/app/verse',   label: 'AxaraVerse',  shortLabel: 'Verse',  icon: MessageCircle, emoji: '💬' },
+  { path: '/app/warta',   label: 'AxaraWarta',  shortLabel: 'Warta',  icon: Newspaper,     emoji: '📰' },
   { path: '/app/profile', label: 'AxaraBadge',  shortLabel: 'Badge',  icon: User,          emoji: '🏅' },
 ];
 

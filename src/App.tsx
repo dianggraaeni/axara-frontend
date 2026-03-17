@@ -11,6 +11,7 @@ import MapPage from './pages/Map'
 import QuestPage from './pages/Quest'
 import ProfilePage from './pages/Profile'
 import ChatPage from './pages/Chat'
+import WartaPage from './pages/Warta' // ✨ ADDED
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
             <Route index element={<MapPage />} />
             <Route path="quest" element={<QuestPage />} />
             <Route path="verse" element={<ChatPage />} />
+            <Route path="warta" element={<WartaPage />} /> {/* ✨ ADDED */}
             <Route path="profile" element={<ProfilePage />} />
           </Route>
 
