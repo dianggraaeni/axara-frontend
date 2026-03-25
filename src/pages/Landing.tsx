@@ -8,8 +8,8 @@ import {
 } from 'lucide-react';
 import React, { useState, useRef } from "react";
 import FloatingChat from '../components/FloatingChat';
-import { useTranslation } from '../hooks/useTranslation'; // ✨ ADDED
-import LanguageSwitcher from '../components/LanguageSwitcher'; // ✨ ADDED
+import { useTranslation } from '../hooks/useTranslation';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const floatingIcons = [
   { img: '/icons/borobudur.jpg', label: 'Borobudur', delay: 0 },
@@ -43,7 +43,10 @@ const getAvatarProps = (name: string) => {
 };
 
 export default function LandingPage() {
-  const { t } = useTranslation(); // ✨ ADDED
+  // ✅ Tambahkan `language` dan `setLanguage` dari useTranslation
+  const { t, language, setLanguage } = useTranslation();
+  const isEn = language === 'en';
+
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
@@ -53,7 +56,7 @@ export default function LandingPage() {
 
   const isLoggedIn = !!localStorage.getItem('user') || !!localStorage.getItem('token');
 
-  // ✨ DYNAMIC FEATURES with translations
+  // ✅ FEATURES — mengambil dari t.landing.features (sudah bilingual di useTranslation)
   const features = [
     {
       id: 'world',
@@ -89,18 +92,38 @@ export default function LandingPage() {
     }
   ];
 
-  // ✨ DYNAMIC STEPS with translations
-  const steps = [
-    { icon: Compass, label: t.landing.features.world.title.includes('World') ? 'Explore Provinces' : 'Jelajahi Provinsi' },
-    { icon: BookOpen, label: t.landing.features.world.title.includes('World') ? 'Learn Culture' : 'Pelajari Budaya' },
-    { icon: Target, label: t.landing.features.battle.title.includes('Battle') ? 'Complete Quests' : 'Selesaikan Quest' },
-    { icon: Star, label: t.landing.features.badge.title.includes('Badge') ? 'Earn XP' : 'Dapatkan XP' },
-    { icon: Award, label: t.landing.features.badge.title.includes('Badge') ? 'Unlock Badges' : 'Buka Badge' },
-    { icon: Trophy, label: t.landing.features.badge.title.includes('Badge') ? 'Climb Ranks' : 'Naik Peringkat' },
+  // ✅ STEPS — menggunakan `isEn` bukan string-matching
+  const steps = isEn ? [
+    { icon: Compass, label: 'Explore Provinces' },
+    { icon: BookOpen, label: 'Learn Culture' },
+    { icon: Target, label: 'Complete Quests' },
+    { icon: Star, label: 'Earn XP' },
+    { icon: Award, label: 'Unlock Badges' },
+    { icon: Trophy, label: 'Climb Ranks' },
+  ] : [
+    { icon: Compass, label: 'Jelajahi Provinsi' },
+    { icon: BookOpen, label: 'Pelajari Budaya' },
+    { icon: Target, label: 'Selesaikan Quest' },
+    { icon: Star, label: 'Dapatkan XP' },
+    { icon: Award, label: 'Buka Badge' },
+    { icon: Trophy, label: 'Naik Peringkat' },
   ];
 
-  // ✨ TESTIMONIALS - Keep as is (user-generated content)
-  const testimonialList = [
+// ✅ TESTIMONIALS — Dibuat bilingual
+  const testimonialList = isEn ? [
+    { text: 'This platform makes learning Indonesian culture feel like playing a game.', author: 'Budi S.', role: 'Student' },
+    { text: 'A beautiful way to introduce Nusantara culture to the younger generation.', author: 'Mrs. Ratna', role: 'Teacher' },
+    { text: 'I discovered so many unique traditions I never knew before.', author: 'Sarah M.', role: 'Traveler' },
+    { text: 'AxaraWorld made me fall in love again with Indonesia\'s rich culture.', author: 'Deni P.', role: 'College Student' },
+    { text: 'The mini-games are so fun! I lost track of time learning about batik and wayang.', author: 'Rina A.', role: 'Designer' },
+    { text: 'The AI Story feature is amazing. It\'s like reading a living history novel!', author: 'Mr. Hendra', role: 'Lecturer' },
+    { text: 'The badge and XP system keep me motivated to explore every province.', author: 'Tika W.', role: 'High School Student' },
+    { text: 'Finally, a platform that makes local culture feel cool and relevant!', author: 'Fajar N.', role: 'Content Creator' },
+    { text: 'I use AXARA to teach in class, the students are very enthusiastic!', author: 'Mrs. Sari', role: 'Elementary Teacher' },
+    { text: 'Interactive and fun learning experience. Highly recommended!', author: 'Kevin L.', role: 'Foreign Tourist' },
+    { text: 'The interactive map is very detailed. I can learn about Kalimantan culture easily.', author: 'Mega R.', role: 'Researcher' },
+    { text: 'AXARA successfully made me proud of my own nation\'s cultural heritage.', author: 'Agus T.', role: 'Private Employee' },
+  ] : [
     { text: 'Platform ini membuat belajar budaya Indonesia terasa seperti bermain game.', author: 'Budi S.', role: 'Pelajar' },
     { text: 'Cara yang indah untuk memperkenalkan budaya Nusantara kepada generasi muda.', author: 'Ibu Ratna', role: 'Guru' },
     { text: 'Saya menemukan begitu banyak tradisi unik yang tidak pernah saya ketahui sebelumnya.', author: 'Sarah M.', role: 'Wisatawan' },
@@ -115,26 +138,49 @@ export default function LandingPage() {
     { text: 'AXARA berhasil membuat saya bangga dengan warisan budaya bangsa sendiri.', author: 'Agus T.', role: 'Karyawan Swasta' },
   ];
 
-  // ✨ FAQ with translations
-  const faqs = [
-    { q: t.landing.hero.title.includes('Explore') ? 'What is AXARA?' : 'Apa itu AXARA?', 
-      a: t.landing.hero.description },
-    { q: t.landing.hero.title.includes('Explore') ? 'How does the XP system work?' : 'Bagaimana sistem XP bekerja?', 
-      a: t.landing.hero.title.includes('Explore') 
-        ? 'You earn XP by completing cultural quests, mini-games, and interacting with the AI guide. Collect XP to level up and unlock badges.'
-        : 'Anda mendapatkan XP dengan menyelesaikan quest budaya, mini-game, dan berinteraksi dengan panduan AI. Kumpulkan XP untuk naik level dan membuka badge.' },
-    { q: t.landing.hero.title.includes('Explore') ? 'Is the platform free?' : 'Apakah platform ini gratis?', 
-      a: t.landing.hero.title.includes('Explore')
-        ? 'Yes! AXARA is completely free for anyone who wants to learn about Indonesian culture.'
-        : 'Ya! AXARA sepenuhnya gratis digunakan bagi siapa saja yang ingin belajar tentang budaya Indonesia.' },
-    { q: t.landing.hero.title.includes('Explore') ? 'Can I explore all provinces?' : 'Bisakah saya menjelajahi semua provinsi?', 
-      a: t.landing.hero.title.includes('Explore')
-        ? 'We are continuously adding more provinces. Currently, you can explore several major regions, with more coming soon!'
-        : 'Kami terus menambahkan lebih banyak provinsi. Saat ini, Anda dapat menjelajahi beberapa wilayah utama, dan lebih banyak lagi akan segera hadir!' },
-    { q: t.landing.hero.title.includes('Explore') ? 'Does AXARA use AI?' : 'Apakah AXARA menggunakan AI?', 
-      a: t.landing.hero.title.includes('Explore')
-        ? 'Yes, AXARA uses AI to generate dynamic quizzes and power the AxaraVerse cultural story guide.'
-        : 'Ya, AXARA menggunakan AI untuk menghasilkan kuis dinamis dan menggerakkan panduan cerita budaya AxaraVerse.' },
+  // ✅ FAQ — menggunakan `isEn` dan `t.landing.hero.description` untuk isi dinamis
+  const faqs = isEn ? [
+    {
+      q: 'What is AXARA?',
+      a: t.landing.hero.description,
+    },
+    {
+      q: 'How does the XP system work?',
+      a: 'You earn XP by completing cultural quests, mini-games, and interacting with the AI guide. Collect XP to level up and unlock badges.',
+    },
+    {
+      q: 'Is the platform free?',
+      a: 'Yes! AXARA is completely free for anyone who wants to learn about Indonesian culture.',
+    },
+    {
+      q: 'Can I explore all provinces?',
+      a: 'We are continuously adding more provinces. Currently, you can explore several major regions, with more coming soon!',
+    },
+    {
+      q: 'Does AXARA use AI?',
+      a: 'Yes, AXARA uses AI to generate dynamic quizzes and power the AxaraVerse cultural story guide.',
+    },
+  ] : [
+    {
+      q: 'Apa itu AXARA?',
+      a: t.landing.hero.description,
+    },
+    {
+      q: 'Bagaimana sistem XP bekerja?',
+      a: 'Anda mendapatkan XP dengan menyelesaikan quest budaya, mini-game, dan berinteraksi dengan panduan AI. Kumpulkan XP untuk naik level dan membuka badge.',
+    },
+    {
+      q: 'Apakah platform ini gratis?',
+      a: 'Ya! AXARA sepenuhnya gratis digunakan bagi siapa saja yang ingin belajar tentang budaya Indonesia.',
+    },
+    {
+      q: 'Bisakah saya menjelajahi semua provinsi?',
+      a: 'Kami terus menambahkan lebih banyak provinsi. Saat ini, Anda dapat menjelajahi beberapa wilayah utama, dan lebih banyak lagi akan segera hadir!',
+    },
+    {
+      q: 'Apakah AXARA menggunakan AI?',
+      a: 'Ya, AXARA menggunakan AI untuk menghasilkan kuis dinamis dan menggerakkan panduan cerita budaya AxaraVerse.',
+    },
   ];
 
   const handleFeatureNavigation = (targetUrl: string) => {
@@ -185,14 +231,14 @@ export default function LandingPage() {
                 {t.landing.features.title}
               </a>
               <a href="#how-it-works" className="font-bold text-text-light hover:text-primary transition-colors">
-                {t.landing.hero.title.includes('Explore') ? 'How to Play' : 'Cara Bermain'}
+                {isEn ? 'How to Play' : 'Cara Bermain'}
               </a>
               <a href="#faq" className="font-bold text-text-light hover:text-primary transition-colors">FAQ</a>
               
               <div className="flex items-center gap-4 bg-cream px-4 py-2 rounded-2xl border border-cream-dark">
                 <div className="flex items-center gap-2">
                   <Flame className="text-primary" size={20} />
-                  <span className="font-bold text-text">{t.landing.hero.title.includes('Explore') ? 'Day 1' : 'Hari 1'}</span>
+                  <span className="font-bold text-text">{isEn ? 'Day 1' : 'Hari 1'}</span>
                 </div>
                 <div className="w-px h-6 bg-cream-dark"></div>
                 <div className="flex items-center gap-2">
@@ -203,7 +249,7 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* ✨ Language Switcher */}
+              {/* Language Switcher */}
               <LanguageSwitcher variant="minimal" />
 
               <Link to="/app" className="bg-primary text-white px-6 py-3 rounded-2xl font-bold hover:bg-primary-hover transition-colors shadow-lg shadow-primary/30 hover:-translate-y-1 transform duration-200">
@@ -231,7 +277,6 @@ export default function LandingPage() {
               transition={{ duration: 0.6 }}
               className="space-y-6"
             >
-              {/* ✨ TRANSLATED HERO */}
               <h1 className="text-5xl md:text-6xl font-display font-extrabold leading-tight text-white">
                 {t.landing.hero.title.split(' ').slice(0, -1).join(' ')}{' '}
                 <span className="text-[#ffce00]">{t.landing.hero.title.split(' ').slice(-1)}</span>
@@ -284,7 +329,7 @@ export default function LandingPage() {
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center pb-4 pr-2">
                       <span className="text-primary font-bold text-lg tracking-tight">
-                        {t.landing.hero.title.includes('Explore') ? 'Welcome!' : 'Selamat Datang!'}
+                        {isEn ? 'Welcome!' : 'Selamat Datang!'}
                       </span>
                     </div>
                   </div>
@@ -345,14 +390,13 @@ export default function LandingPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* ✨ TRANSLATED FEATURES TITLE */}
           <div className="text-center max-w-3xl mx-auto mb-32">
             <h2 className="text-4xl md:text-5xl font-display font-extrabold mb-4 text-primary">
               {t.landing.features.title.split(' ')[0]}{' '}
               <span className="text-[#ffce00]">{t.landing.features.title.split(' ').slice(1).join(' ')}</span>
             </h2>
             <p className="text-text-light font-medium text-lg">
-              {t.landing.hero.title.includes('Explore') 
+              {isEn
                 ? 'Learn through gamification designed to preserve Nusantara traditions.'
                 : 'Belajarlah melalui gamifikasi yang dirancang untuk melestarikan tradisi Nusantara.'}
             </p>
@@ -360,9 +404,9 @@ export default function LandingPage() {
 
           <div className="space-y-48">
             {features.map((feature, i) => {
-              const isEven = i % 2 === 0;
+              const isEvenRow = i % 2 === 0;
               return (
-                <div key={feature.id} className={`flex flex-col md:flex-row items-center gap-16 md:gap-24 ${!isEven ? 'md:flex-row-reverse' : ''}`}>
+                <div key={feature.id} className={`flex flex-col md:flex-row items-center gap-16 md:gap-24 ${!isEvenRow ? 'md:flex-row-reverse' : ''}`}>
                   <div className="flex-1 space-y-6">
                     <div className="w-16 h-16 bg-white text-primary rounded-2xl flex items-center justify-center shadow-md border-2 border-primary/10">
                       <feature.icon size={32} />
@@ -413,13 +457,12 @@ export default function LandingPage() {
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          {/* ✨ TRANSLATED */}
           <div className="text-center mb-16">
             <h2 className="text-4xl font-display font-extrabold mb-4">
-              {t.landing.hero.title.includes('Explore') ? 'How to Play' : 'Cara Bermain'}
+              {isEn ? 'How to Play' : 'Cara Bermain'}
             </h2>
             <p className="text-white/80 font-medium text-lg">
-              {t.landing.hero.title.includes('Explore') ? 'Your journey to becoming a Culture Master.' : 'Perjalananmu menjadi Master Budaya.'}
+              {isEn ? 'Your journey to becoming a Culture Master.' : 'Perjalananmu menjadi Master Budaya.'}
             </p>
           </div>
 
@@ -448,15 +491,14 @@ export default function LandingPage() {
       </section>
 
       {/* ===================== TESTIMONI ===================== */}
-      <section className="py-24 bg-cream text-text relative" >
+      <section className="py-24 bg-cream text-text relative">
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          {/* ✨ TRANSLATED */}
           <div className="text-center mb-16 max-w-4xl mx-auto">
             <h2 className="text-4xl md:text-5xl font-display font-extrabold text-primary mb-4">
-              {t.landing.hero.title.includes('Explore') ? 'Explorer Stories' : 'Kata Penjelajah'}
+              {isEn ? 'Explorer Stories' : 'Kata Penjelajah'}
             </h2>
             <p className="text-text-light font-medium text-lg max-w-2xl mx-auto">
-              {t.landing.hero.title.includes('Explore')
+              {isEn
                 ? 'Thousands of explorers have experienced the thrill of discovering Nusantara culture with AXARA.'
                 : 'Ribuan penjelajah telah merasakan serunya menjelajahi budaya Nusantara bersama AXARA.'}
             </p>
@@ -575,7 +617,7 @@ export default function LandingPage() {
               </h2>
 
               <p className="text-lg text-white/90 font-medium leading-relaxed mb-8">
-                {t.landing.hero.title.includes('Explore')
+                {isEn
                   ? 'Your hub for the latest Indonesian cultural news. Discover festivals, traditional events, conservation efforts, and creative UMKM promotions.'
                   : 'Pusat informasi budaya terkini. Temukan festival budaya, acara tradisi, berita pelestarian, hingga promosi UMKM kreatif daerah.'}
               </p>
@@ -595,7 +637,6 @@ export default function LandingPage() {
                     viewport={{ once: true }}
                     className="flex items-center gap-3"
                   >
-                    {/* Container Ikon */}
                     <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 overflow-hidden px-2">
                       <img 
                         src={item.icon} 
@@ -603,10 +644,8 @@ export default function LandingPage() {
                         className="w-full h-full object-contain" 
                       />
                     </div>
-                    
-                    {/* Teks Label */}
                     <span className="font-bold text-white">
-                      {t.landing.hero.title.includes('Explore') ? item.labelEn : item.labelId}
+                      {isEn ? item.labelEn : item.labelId}
                     </span>
                   </motion.div>
                 ))}
@@ -617,12 +656,12 @@ export default function LandingPage() {
                 className="inline-flex items-center gap-2 bg-white text-primary px-8 py-4 rounded-2xl font-bold text-lg hover:bg-[#ffce00] hover:text-text transition-all shadow-xl hover:-translate-y-1"
               >
                 <Newspaper size={20} />
-                {t.landing.hero.title.includes('Explore') ? 'Read News' : 'Baca Berita'}
+                {isEn ? 'Read News' : 'Baca Berita'}
                 <ArrowRight size={20} />
               </Link>
             </motion.div>
 
-            {/* Right side - Visual (DIPERBAIKI DI SINI) */}
+            {/* Right side - Visual */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -648,9 +687,9 @@ export default function LandingPage() {
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-bold text-primary uppercase mb-1">Festival</div>
                       <h4 className="font-bold text-text text-sm mb-1 line-clamp-1">
-                        {t.landing.hero.title.includes('Explore') ? 'Batik Festival 2025' : 'Festival Batik 2025'}
+                        {isEn ? 'Batik Festival 2025' : 'Festival Batik 2025'}
                       </h4>
-                      <p className="text-xs text-text-light">{t.landing.hero.title.includes('Explore') ? '2 days ago • Solo' : '2 hari lalu • Solo'}</p>
+                      <p className="text-xs text-text-light">{isEn ? '2 days ago • Solo' : '2 hari lalu • Solo'}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -670,9 +709,9 @@ export default function LandingPage() {
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-bold text-emerald-600 uppercase mb-1">UMKM</div>
                       <h4 className="font-bold text-text text-sm mb-1 line-clamp-1">
-                        {t.landing.hero.title.includes('Explore') ? 'NTT Weaving Goes to Paris' : 'Tenun NTT ke Paris'}
+                        {isEn ? 'NTT Weaving Goes to Paris' : 'Tenun NTT ke Paris'}
                       </h4>
-                      <p className="text-xs text-text-light">{t.landing.hero.title.includes('Explore') ? '5 days ago • Jakarta' : '5 hari lalu • Jakarta'}</p>
+                      <p className="text-xs text-text-light">{isEn ? '5 days ago • Jakarta' : '5 hari lalu • Jakarta'}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -691,29 +730,28 @@ export default function LandingPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-bold text-blue-600 uppercase mb-1">
-                        {t.landing.hero.title.includes('Explore') ? 'Conservation' : 'Pelestarian'}
+                        {isEn ? 'Conservation' : 'Pelestarian'}
                       </div>
                       <h4 className="font-bold text-text text-sm mb-1 line-clamp-1">
-                        {t.landing.hero.title.includes('Explore') ? 'Wayang in School Curriculum' : 'Wayang Masuk Kurikulum'}
+                        {isEn ? 'Wayang in School Curriculum' : 'Wayang Masuk Kurikulum'}
                       </h4>
-                      <p className="text-xs text-text-light">{t.landing.hero.title.includes('Explore') ? '1 week ago • Yogyakarta' : '1 minggu lalu • Yogyakarta'}</p>
+                      <p className="text-xs text-text-light">{isEn ? '1 week ago • Yogyakarta' : '1 minggu lalu • Yogyakarta'}</p>
                     </div>
                   </div>
                 </motion.div>
-              </div> {/* TUTUP div relative space-y-4 */}
-            </motion.div> {/* TUTUP motion.div Visual sisi kanan */}
+              </div>
+            </motion.div>
 
-          </div> {/* TUTUP div grid */}
-        </div> {/* TUTUP div max-w-7xl */}
+          </div>
+        </div>
       </section>
 
       {/* ===================== FAQ ===================== */}
       <section id="faq" className="py-24 bg-white">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* ✨ TRANSLATED */}
           <div className="text-center mb-16">
             <h2 className="text-4xl font-display font-extrabold text-primary mb-4">
-              {t.landing.hero.title.includes('Explore') ? 'Frequently Asked Questions' : 'Pertanyaan yang Sering Diajukan'}
+              {t.landing.faq.title}
             </h2>
           </div>
           <div className="space-y-4">
@@ -755,7 +793,7 @@ export default function LandingPage() {
                 <span className="font-display font-bold text-2xl tracking-tight text-primary">AXARA</span>
               </div>
               <p className="text-text font-medium mb-8 max-w-md leading-relaxed">
-                {t.landing.hero.title.includes('Explore')
+                {isEn
                   ? 'Preserving Culture Through Exploration. Join us in making Indonesian history and traditions accessible and fun for everyone.'
                   : 'Melestarikan Budaya Melalui Eksplorasi. Bergabunglah bersama kami dalam membuat sejarah dan tradisi Indonesia dapat diakses dan menyenangkan bagi semua orang.'}
               </p>
@@ -775,7 +813,7 @@ export default function LandingPage() {
             {/* Form Kontak */}
             <div className="bg-white p-8 rounded-3xl border-2 border-cream shadow-sm">
               <h3 className="text-2xl font-display font-bold mb-6 text-primary">
-                {t.landing.hero.title.includes('Explore') ? 'Contact Us' : 'Hubungi Kami'}
+                {t.landing.contact.title}
               </h3>
 
               {formSubmitted ? (
@@ -790,10 +828,10 @@ export default function LandingPage() {
                   </div>
                   <div className="text-center">
                     <h4 className="text-xl font-bold text-primary mb-2">
-                      {t.landing.hero.title.includes('Explore') ? 'Message Sent! 🎉' : 'Pesan Terkirim! 🎉'}
+                      {isEn ? 'Message Sent! 🎉' : 'Pesan Terkirim! 🎉'}
                     </h4>
                     <p className="text-text-light font-medium">
-                      {t.landing.hero.title.includes('Explore')
+                      {isEn
                         ? 'Thank you! The AXARA team will respond to your message soon.'
                         : 'Terima kasih! Tim AXARA akan segera merespons pesan Anda.'}
                     </p>
@@ -803,7 +841,7 @@ export default function LandingPage() {
                     className="flex items-center gap-2 bg-cream border-2 border-cream-dark text-primary font-bold px-6 py-3 rounded-xl hover:bg-primary hover:text-white hover:border-primary transition-all"
                   >
                     <RefreshCw size={18} />
-                    {t.landing.hero.title.includes('Explore') ? 'Send Another Message' : 'Kirim Pesan Lagi'}
+                    {isEn ? 'Send Another Message' : 'Kirim Pesan Lagi'}
                   </button>
                 </motion.div>
               ) : (
@@ -813,7 +851,7 @@ export default function LandingPage() {
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder={t.landing.hero.title.includes('Explore') ? 'Your Name' : 'Nama Anda'} 
+                    placeholder={t.landing.contact.name}
                     className="w-full bg-cream border-2 border-cream-dark rounded-xl px-4 py-3 text-text focus:outline-none focus:border-primary transition-colors font-bold placeholder:text-text-light"
                   />
                   <input 
@@ -821,14 +859,14 @@ export default function LandingPage() {
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder={t.landing.hero.title.includes('Explore') ? 'Your Email' : 'Email Anda'} 
+                    placeholder={t.landing.contact.email}
                     className="w-full bg-cream border-2 border-cream-dark rounded-xl px-4 py-3 text-text focus:outline-none focus:border-primary transition-colors font-bold placeholder:text-text-light"
                   />
                   <textarea 
                     required
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    placeholder={t.landing.hero.title.includes('Explore') ? 'Your Message' : 'Pesan Anda'} 
+                    placeholder={t.landing.contact.message}
                     rows={4}
                     className="w-full bg-cream border-2 border-cream-dark rounded-xl px-4 py-3 text-text focus:outline-none focus:border-primary transition-colors resize-none font-bold placeholder:text-text-light"
                   ></textarea>
@@ -836,7 +874,7 @@ export default function LandingPage() {
                     type="submit" 
                     className="w-full bg-primary text-white font-bold py-4 rounded-xl hover:bg-primary-hover transition-colors flex justify-center items-center gap-2 shadow-lg shadow-primary/20"
                   >
-                    {t.landing.hero.title.includes('Explore') ? 'Send Message' : 'Kirim Pesan'} <Send size={18} />
+                    {t.landing.contact.send} <Send size={18} />
                   </button>
                 </form>
               )}
@@ -845,9 +883,9 @@ export default function LandingPage() {
 
           <div className="border-t border-cream pt-8 text-center text-text-light font-bold text-sm">
             &copy; {new Date().getFullYear()} AXARA —{' '}
-            {t.landing.hero.title.includes('Explore')
-              ? 'Preserving Culture Through Exploration.'
-              : 'Melestarikan Budaya Melalui Eksplorasi.'}
+            {isEn
+              ? 'Explore Nusantara, Bring Culture to Life'
+              : 'Jelajahi Nusantara, Hidupkan Budaya'}
           </div>
         </div>
       </footer>
