@@ -1,18 +1,18 @@
 // src/pages/Login.tsx
-// Halaman Login & Register dengan tab switcher.
+// Halaman Login & Register dengan sistem multi-bahasa terintegrasi.
 
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Lock, User, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { useTranslation } from '../hooks/useTranslation'; // ✨ ADDED
-import LanguageSwitcher from '../components/LanguageSwitcher'; // ✨ ADDED
+import { useTranslation } from '../hooks/useTranslation';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 type Tab = 'login' | 'register';
 
 export default function LoginPage() {
-  const { t } = useTranslation(); // ✨ ADDED
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('login');
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -26,21 +26,19 @@ export default function LoginPage() {
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
+    // Validasi Dasar menggunakan teks dari config
     if (!email || !password) { 
-      setError(t.auth.email.includes('Email') 
-        ? 'Email and password are required.' 
-        : 'Email dan password wajib diisi.'); 
+      setError(t.auth.errorRequired); 
       return; 
     }
     if (tab === 'register' && !username) { 
-      setError(t.auth.username.includes('Username') 
-        ? 'Username is required.' 
-        : 'Username wajib diisi.'); 
+      setError(t.auth.usernamePlaceholder); 
       return; 
     }
 
     setError('');
     setIsLoading(true);
+    
     try {
       if (tab === 'login') {
         await login(email, password);
@@ -49,9 +47,8 @@ export default function LoginPage() {
       }
       navigate('/app');
     } catch (e: any) {
-      setError(e?.response?.data?.error ?? (t.auth.email.includes('Email')
-        ? 'An error occurred. Please try again.'
-        : 'Terjadi kesalahan. Coba lagi.'));
+      // Mengambil error dari server jika ada, jika tidak pakai error generic dari config
+      setError(e?.response?.data?.error ?? t.auth.errorGeneric);
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +56,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-primary flex items-center justify-center p-4">
-      {/* Background pattern */}
+      {/* Background pattern dekoratif */}
       <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
 
       <motion.div
@@ -67,20 +64,20 @@ export default function LoginPage() {
         animate={{ opacity: 1, y: 0 }}
         className="relative bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl border-4 border-white/20"
       >
-        {/* ✨ Language Switcher - Top Right */}
+        {/* Language Switcher di pojok kanan atas kartu */}
         <div className="absolute top-4 right-4">
           <LanguageSwitcher variant="minimal" />
         </div>
 
-        {/* Logo */}
+        {/* Logo Axara */}
         <Link to="/" className="flex items-center gap-3 mb-8 justify-center group">
           <div className="w-12 h-12 overflow-hidden">
-            <img src="/logo.png" alt="Axara" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+            <img src="/logo.png" alt="Axara" className="w-full h-full object-contain" />
           </div>
           <span className="font-display font-black text-3xl text-primary tracking-tight">AXARA</span>
         </Link>
 
-        {/* Tab switcher */}
+        {/* Tab Switcher (Masuk / Daftar) */}
         <div className="flex bg-cream rounded-2xl p-1 mb-8">
           {(['login', 'register'] as Tab[]).map((tabType) => (
             <button
@@ -90,7 +87,6 @@ export default function LoginPage() {
                 tab === tabType ? 'bg-white text-primary shadow-sm' : 'text-text-light'
               }`}
             >
-              {/* ✨ TRANSLATED */}
               {tabType === 'login' ? t.auth.login : t.auth.register}
             </button>
           ))}
@@ -105,15 +101,19 @@ export default function LoginPage() {
             transition={{ duration: 0.2 }}
             className="space-y-4"
           >
-            {/* Error message */}
+            {/* Alert Error */}
             {error && (
-              <div className="flex items-center gap-2 p-3 bg-red-50 border-2 border-red-200 rounded-xl text-red-600 text-sm font-medium">
+              <motion.div 
+                initial={{ scale: 0.95 }} 
+                animate={{ scale: 1 }}
+                className="flex items-center gap-2 p-3 bg-red-50 border-2 border-red-200 rounded-xl text-red-600 text-sm font-medium"
+              >
                 <AlertCircle size={16} />
                 {error}
-              </div>
+              </motion.div>
             )}
 
-            {/* Email */}
+            {/* Field Email */}
             <div className="relative">
               <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-light" />
               <input
@@ -126,15 +126,13 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Username (register only) */}
+            {/* Field Username (Hanya muncul saat Register) */}
             {tab === 'register' && (
               <div className="relative">
                 <User size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-light" />
                 <input
                   type="text"
-                  placeholder={t.auth.username.includes('Username') 
-                    ? 'Username (min. 3 characters)' 
-                    : 'Username (min. 3 karakter)'}
+                  placeholder={t.auth.usernamePlaceholder}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="w-full pl-11 pr-4 py-3.5 bg-cream border-2 border-cream-dark rounded-xl focus:border-primary focus:outline-none font-medium text-text placeholder:text-text-light transition-colors"
@@ -142,7 +140,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            {/* Password */}
+            {/* Field Password */}
             <div className="relative">
               <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-light" />
               <input
@@ -154,6 +152,7 @@ export default function LoginPage() {
                 className="w-full pl-11 pr-12 py-3.5 bg-cream border-2 border-cream-dark rounded-xl focus:border-primary focus:outline-none font-medium text-text placeholder:text-text-light transition-colors"
               />
               <button
+                type="button"
                 onClick={() => setShowPass(!showPass)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-text-light hover:text-primary transition-colors"
               >
@@ -161,56 +160,51 @@ export default function LoginPage() {
               </button>
             </div>
 
-            {/* Gender (register only) */}
+            {/* Pemilihan Gender (Hanya muncul saat Register) */}
             {tab === 'register' && (
-              <div>
-                {/* ✨ TRANSLATED */}
-                <p className="text-sm font-bold text-text-light mb-2">
-                  {t.auth.username.includes('Username') ? 'Gender' : 'Gender'}
+              <div className="space-y-2">
+                <p className="text-sm font-bold text-text-light px-1">
+                  {t.auth.gender}
                 </p>
                 <div className="flex gap-3">
                   {(['male', 'female'] as const).map((g) => (
                     <button
                       key={g}
+                      type="button"
                       onClick={() => setGender(g)}
                       className={`flex-1 py-2.5 rounded-xl font-bold text-sm border-2 transition-all ${
                         gender === g
                           ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-cream-dark text-text-light'
+                          : 'border-cream-dark text-text-light hover:bg-cream'
                       }`}
                     >
-                      {/* ✨ TRANSLATED */}
-                      {g === 'male' 
-                        ? (t.auth.username.includes('Username') ? '👦 Male' : '👦 Laki-laki')
-                        : (t.auth.username.includes('Username') ? '👧 Female' : '👧 Perempuan')}
+                      {g === 'male' ? t.auth.male : t.auth.female}
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
+            {/* Tombol Submit Utama */}
             <button
               onClick={handleSubmit}
               disabled={isLoading}
               className="w-full py-4 bg-primary text-white font-bold text-lg rounded-2xl hover:bg-primary-hover disabled:opacity-60 transition-colors shadow-lg shadow-primary/30 flex items-center justify-center gap-2 mt-2"
             >
-              {isLoading ? <Loader2 size={20} className="animate-spin" /> : null}
-              {/* ✨ TRANSLATED */}
+              {isLoading && <Loader2 size={20} className="animate-spin" />}
               {tab === 'login' ? t.auth.loginButton : t.auth.registerButton}
             </button>
           </motion.div>
         </AnimatePresence>
 
+        {/* Footer Link untuk pindah tab */}
         <p className="text-center text-sm text-text-light font-medium mt-6">
-          {/* ✨ TRANSLATED */}
           {tab === 'login' ? t.auth.noAccount : t.auth.hasAccount}{' '}
           <button
             onClick={() => { setTab(tab === 'login' ? 'register' : 'login'); setError(''); }}
             className="text-primary font-bold hover:underline"
           >
-            {tab === 'login' 
-              ? (t.auth.noAccount.includes('Don\'t') ? 'Register now' : 'Daftar sekarang')
-              : t.auth.login}
+            {tab === 'login' ? t.auth.registerLink : t.auth.login}
           </button>
         </p>
       </motion.div>

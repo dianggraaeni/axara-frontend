@@ -12,12 +12,31 @@ export interface Translations {
     home: string; world: string; battle: string; verse: string;
     badge: string; profile: string;
   };
+  auth: {
+    login: string;
+    register: string;
+    email: string;
+    password: string;
+    username: string;
+    usernamePlaceholder: string;
+    loginButton: string;
+    registerButton: string;
+    noAccount: string;
+    hasAccount: string;
+    registerLink: string;
+    gender: string;
+    male: string;
+    female: string;
+    errorRequired: string;
+    errorGeneric: string;
+  };
   landing: {
     hero: {
       title: string;
       description: string;
       ctaStart: string;
       ctaLearn: string;
+      welcome: string;
     };
     features: {
       title: string;
@@ -50,12 +69,31 @@ export const translations: Record<Language, Translations> = {
       home: 'Beranda', world: 'AxaraWorld', battle: 'AxaraBattle',
       verse: 'AxaraVerse', badge: 'AxaraBadge', profile: 'Profil'
     },
+    auth: {
+      login: 'Masuk',
+      register: 'Daftar',
+      email: 'Email',
+      password: 'Kata Sandi',
+      username: 'Nama Pengguna',
+      usernamePlaceholder: 'Username (min. 3 karakter)',
+      loginButton: 'Masuk ke Akun',
+      registerButton: 'Buat Akun',
+      noAccount: 'Belum punya akun?',
+      hasAccount: 'Sudah punya akun?',
+      registerLink: 'Daftar sekarang',
+      gender: 'Jenis Kelamin',
+      male: '👦 Laki-laki',
+      female: '👧 Perempuan',
+      errorRequired: 'Email dan password wajib diisi.',
+      errorGeneric: 'Terjadi kesalahan. Coba lagi.',
+    },
     landing: {
       hero: {
         title: 'Jelajahi Budaya Abadi Nusantara',
         description: 'AXARA adalah platform gamifikasi edukasi yang mengajak pengguna menjelajahi budaya Indonesia melalui peta interaktif, mini-games, dan AI storytelling.',
         ctaStart: 'Mulai Menjelajah',
         ctaLearn: 'Lihat Fitur',
+        welcome: 'Selamat Datang!',
       },
       features: {
         title: 'Fitur Utama',
@@ -96,12 +134,31 @@ export const translations: Record<Language, Translations> = {
       home: 'Home', world: 'AxaraWorld', battle: 'AxaraBattle',
       verse: 'AxaraVerse', badge: 'AxaraBadge', profile: 'Profile'
     },
+    auth: {
+      login: 'Login',
+      register: 'Register',
+      email: 'Email',
+      password: 'Password',
+      username: 'Username',
+      usernamePlaceholder: 'Username (min. 3 characters)',
+      loginButton: 'Login to Account',
+      registerButton: 'Create Account',
+      noAccount: "Don't have an account?",
+      hasAccount: 'Already have an account?',
+      registerLink: 'Register now',
+      gender: 'Gender',
+      male: '👦 Male',
+      female: '👧 Female',
+      errorRequired: 'Email and password are required.',
+      errorGeneric: 'An error occurred. Please try again.',
+    },
     landing: {
       hero: {
         title: 'Explore the Eternal Culture of Nusantara',
         description: 'AXARA is a cultural gamification platform where users explore Indonesian culture through interactive maps, mini-games, and AI storytelling.',
         ctaStart: 'Start Exploring',
         ctaLearn: 'View Features',
+        welcome: 'Welcome!',
       },
       features: {
         title: 'Main Features',
