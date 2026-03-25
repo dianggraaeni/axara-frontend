@@ -195,7 +195,7 @@ export const translations: Record<Language, Translations> = {
     verse: {
       title: 'AXARA VERSE',
       subtitle: 'Pemandu Budaya Nusantara',
-      greeting: 'Halo! Saya Axara Guide. Ada yang ingin kamu tanyakan tentang budaya Indonesia hari ini?',
+      greeting: 'Halo! Selamat datang di AxaraVerse! ✨ Perkenalkan, aku Axara, pemandu budaya Nusantara kamu 🌺 Ada yang ingin kamu tanyakan',
       placeholder: 'Tanyakan sesuatu tentang sejarah, tradisi, atau kuliner...',
       suggestTitle: 'Mulai dengan pertanyaan ini:',
       suggestHistory: '🏯 Cerita tentang Majapahit',
@@ -298,7 +298,7 @@ export const translations: Record<Language, Translations> = {
     verse: {
       title: 'AXARA VERSE',
       subtitle: 'Nusantara Culture Guide',
-      greeting: 'Hello! I am Axara Guide. Anything you want to ask about Indonesian culture today?',
+      greeting: 'Hello! Welcome to AxaraVerse! ✨ Im Axara, your guide to the cultures of the Nusantara 🌺 Is there anything you\'d like to ask?',
       placeholder: 'Ask about history, traditions, or culinary...',
       suggestTitle: 'Start with these questions:',
       suggestHistory: '🏯 Story about Majapahit',

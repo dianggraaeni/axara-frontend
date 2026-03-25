@@ -149,7 +149,7 @@ export default function AksaraScramble({ provinceId, onExit, onWin }: AksaraScra
             <PenTool size={40} className="text-white" strokeWidth={3} />
           </motion.div>
           <div className="px-8 py-6 rounded-[22px] text-center" style={{ background: 'white', border: '4px solid #1a0f0a', boxShadow: '6px 6px 0 #1a0f0a' }}>
-            <p className="font-black text-2xl uppercase tracking-widest" style={{ color: '#1a0f0a' }}>AI Menyiapkan Susunan</p>
+            <p className="font-black text-2xl uppercase tracking-widest" style={{ color: '#1a0f0a' }}>AXARA Menyiapkan Susunan</p>
             <p className="text-base font-bold mt-2" style={{ color: 'rgba(26,15,10,0.5)' }}>Dari {formattedProvinceName}...</p>
           </div>
         </div>

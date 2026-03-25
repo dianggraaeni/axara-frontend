@@ -169,7 +169,7 @@ export default function CultureSwipe({ provinceId, onExit, onWin }: CultureSwipe
             style={{ background: 'white', border: '4px solid #1a0f0a', boxShadow: '6px 6px 0 #1a0f0a' }}
           >
             <p className="font-black text-2xl uppercase tracking-widest" style={{ color: '#1a0f0a' }}>
-              AI Menyiapkan Kartu
+              AXARA Menyiapkan Kartu
             </p>
             <p className="text-base font-bold mt-2" style={{ color: 'rgba(26,15,10,0.5)' }}>
               Budaya {formattedProvinceName}...

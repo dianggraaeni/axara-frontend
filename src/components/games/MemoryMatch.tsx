@@ -109,7 +109,7 @@ export default function MemoryMatch({ provinceId, onExit, onWin }: MemoryMatchPr
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
         <div className="bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center">
           <Loader2 className="w-16 h-16 text-[#D4AF37] animate-spin mb-4" />
-          <p className="font-bold text-gray-600">AI menyiapkan kartu Memory untuk {formattedProvinceName}...</p>
+          <p className="font-bold text-gray-600">AXARA menyiapkan kartu Memory untuk {formattedProvinceName}...</p>
         </div>
       </div>
     );
