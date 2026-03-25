@@ -9,21 +9,14 @@ import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simp
 import { provinces as allProvinces } from '../services/provinces.data';
 import { useAuth } from '../context/AuthContext';
 import { useUserStats } from '../hooks/useBackendData';
-import { useTranslation } from '../hooks/useTranslation'; // ✨ ADDED
-import LanguageSwitcher from '../components/LanguageSwitcher'; // ✨ ADDED
+import { useTranslation } from '../hooks/useTranslation';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const geoUrl = "/indonesia-province-simple.json";
 
 const normalizeId = (name: string) =>
   name ? name.toLowerCase().trim().replace(/\s+/g, '-').replace(/\./g, '').replace('d.i.-', 'di-') : "";
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Province unlock system:
-//   • index 0 → level 1 required, index 1 → level 2, etc.
-//   • "completed" = all 3 games finished (derived from completedIndices set)
-//   • "current"   = unlocked & not yet completed (highest available)
-//   • "locked"    = level requirement not met yet
-// ─────────────────────────────────────────────────────────────────────────────
 type ProvinceStatus = 'locked' | 'completed' | 'current' | 'unlocked';
 
 function getProvinceStatus(
@@ -46,15 +39,13 @@ const STATUS_MAP_FILL: Record<ProvinceStatus, string> = {
 };
 
 export default function MapPage() {
-  const { t } = useTranslation(); // ✨ ADDED
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { stats } = useUserStats();
 
   const userLevel = stats?.level ?? user?.level ?? 1;
 
-  // All provinces below current level are "completed" for demo.
-  // Replace with real backend data in production.
   const completedIndices = useMemo(() => {
     const s = new Set<number>();
     for (let i = 0; i < userLevel - 1; i++) s.add(i);
@@ -105,7 +96,6 @@ export default function MapPage() {
     setSelectedId(prev => (prev === id ? null : id));
   };
 
-  // ── small helper for press-down button style ──────────────────────────────
   const pressHandlers = {
     onMouseDown: (e: React.MouseEvent<HTMLButtonElement>) => {
       (e.currentTarget).style.boxShadow = '0 0 0 #1a0f0a';
@@ -121,22 +111,20 @@ export default function MapPage() {
     },
   };
 
+  const isEnglish = t?.world?.subtitle?.includes('Explore');
+
   return (
     <div
       className="flex flex-col w-full overflow-hidden relative"
       style={{ height: '100dvh', background: '#F4F1E0', fontFamily: "'Nunito', sans-serif" }}
     >
-      {/* Dot-grid texture */}
       <div className="absolute inset-0 pointer-events-none z-0"
         style={{
           backgroundImage: 'radial-gradient(circle, rgba(241,76,56,0.07) 1px, transparent 1px)',
           backgroundSize: '26px 26px'
         }} />
 
-      {/* ════════════ HEADER ════════════ */}
       <header className="shrink-0 z-10 pl-5 pr-24 pt-3 pb-2 flex items-center justify-between gap-3">
-
-        {/* Brand */}
         <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}
           className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center"
@@ -145,15 +133,15 @@ export default function MapPage() {
           </div>
           <div>
             <h1 className="text-xl font-black leading-none" style={{ color: '#1a0f0a' }}>
-              {t.world.title.split(' ')[0]} <span style={{ color: '#F14C38' }}>{t.world.title.split(' ')[1] || 'WORLD'}</span>
+              {t?.world?.title?.split(' ')[0]}{' '}
+              <span style={{ color: '#F14C38' }}>{t?.world?.title?.split(' ')[1] || 'WORLD'}</span>
             </h1>
             <p className="text-[9px] font-black tracking-widest uppercase leading-none mt-0.5" style={{ color: '#F14C38' }}>
-              {t.world.subtitle}
+              {t?.world?.subtitle}
             </p>
           </div>
         </motion.div>
 
-        {/* Hover label – centred */}
         <div className="flex-1 flex justify-center pointer-events-none">
           <AnimatePresence>
             {hoveredName && (
@@ -167,15 +155,13 @@ export default function MapPage() {
           </AnimatePresence>
         </div>
 
-        {/* Legend + Zoom */}
         <div className="flex items-center gap-2">
-          {/* Legend (desktop only) - ✨ TRANSLATED */}
           <div className="hidden lg:flex items-center gap-3 mr-2">
             {([
-              { color: '#FBBF24', label: t.world.inProgress, border: '#1a0f0a' },
-              { color: '#F14C38', label: t.world.completed, border: '#1a0f0a' },
-              { color: '#FFFFFF', label: t.world.subtitle.includes('Explore') ? 'Available' : 'Tersedia', border: '#9ca3af' },
-              { color: '#d1d5db', label: t.world.locked, border: '#9ca3af' },
+              { color: '#FBBF24', label: t?.world?.inProgress, border: '#1a0f0a' },
+              { color: '#F14C38', label: t?.world?.completed, border: '#1a0f0a' },
+              { color: '#FFFFFF', label: isEnglish ? 'Available' : 'Tersedia', border: '#9ca3af' },
+              { color: '#d1d5db', label: t?.world?.locked, border: '#9ca3af' },
             ] as const).map(item => (
               <div key={item.label} className="flex items-center gap-1">
                 <div className="w-2.5 h-2.5 rounded-sm"
@@ -186,10 +172,8 @@ export default function MapPage() {
             ))}
           </div>
 
-          {/* Language Switcher - ✨ ADDED */}
           <LanguageSwitcher variant="minimal" />
 
-          {/* Zoom */}
           {[
             { icon: <Plus size={13} strokeWidth={3} />,     fn: handleZoomIn  },
             { icon: <Minus size={13} strokeWidth={3} />,    fn: handleZoomOut },
@@ -206,14 +190,12 @@ export default function MapPage() {
         </div>
       </header>
 
-      {/* ════════════ MAP ════════════ */}
       <div className="relative z-10 ml-5 mr-24 rounded-3xl overflow-hidden flex-1 min-h-0"
         style={{
           border: '4px solid #1a0f0a',
           boxShadow: '0 6px 24px rgba(241,76,56,0.12)',
           background: 'linear-gradient(160deg, #dbeafe 0%, #bfdbfe 60%, #e0f2fe 100%)'
         }}>
-        {/* Ocean lines */}
         <div className="absolute inset-0 pointer-events-none z-0 opacity-10"
           style={{ backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 24px,rgba(59,130,246,0.4) 24px,rgba(59,130,246,0.4) 25px)' }} />
 
@@ -224,7 +206,7 @@ export default function MapPage() {
             <Geographies geography={geoUrl}>
               {({ geographies }) =>
                 geographies.map((geo) => {
-                  const rawName = geo.properties.Propinsi || geo.properties.NAME_1 || geo.properties.name;
+                  const rawName = geo.properties?.Propinsi || geo.properties?.NAME_1 || geo.properties?.name;
                   const id = normalizeId(rawName);
                   const idx = allProvinces.findIndex(p => p.id === id);
                   const isExist = idx !== -1;
@@ -261,7 +243,6 @@ export default function MapPage() {
           </ZoomableGroup>
         </ComposableMap>
 
-        {/* Level badge */}
         <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl"
           style={{ background: '#1a0f0a', border: '2px solid #FBBF24' }}>
           <Star size={11} className="text-yellow-400" strokeWidth={3} fill="#FBBF24" />
@@ -269,16 +250,8 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* ════════════ PROVINCE STRIP ════════════ */}
-      {/*
-        Left side  : px-5 matches map margin (flush left)
-        Right side : pr-24 gives ~96px breathing room so cards never overlap
-                     the chatbot bubble (bottom-right) or audio button
-      */}
       <div className="shrink-0 pl-5 pr-24 pt-3 pb-4 z-10">
         <div className="flex items-center gap-3">
-
-          {/* ← */}
           <button onClick={() => scroll('left')}
             className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl"
             style={{ background: '#F14C38', border: '2.5px solid #1a0f0a',
@@ -287,7 +260,6 @@ export default function MapPage() {
             <ChevronLeft size={17} strokeWidth={3} />
           </button>
 
-          {/* Cards */}
           <div ref={scrollRef}
             className="flex gap-3 overflow-x-auto py-1.5"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', scrollBehavior: 'smooth' }}>
@@ -326,9 +298,8 @@ export default function MapPage() {
                     transition: 'border-color 0.15s, opacity 0.15s',
                   }}>
 
-                  {/* Thumbnail — taller so it's clearly readable */}
                   <div className="relative overflow-hidden" style={{ height: '72px' }}>
-                    <img src={prov.image} alt={prov.name}
+                    <img src={prov?.image} alt={prov?.name}
                       className="w-full h-full object-cover"
                       style={{
                         filter: isLocked
@@ -337,7 +308,6 @@ export default function MapPage() {
                         transition: 'filter 0.2s'
                       }} />
 
-                    {/* Lock overlay */}
                     {isLocked && (
                       <div className="absolute inset-0 flex flex-col items-center justify-center gap-1"
                         style={{ background: 'rgba(0,0,0,0.42)' }}>
@@ -351,7 +321,6 @@ export default function MapPage() {
                       </div>
                     )}
 
-                    {/* Completed badge */}
                     {isDone && !isActive && (
                       <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center"
                         style={{ background: '#F14C38', border: '2px solid white' }}>
@@ -359,7 +328,6 @@ export default function MapPage() {
                       </div>
                     )}
 
-                    {/* Current star badge */}
                     {isCurrent && !isActive && (
                       <div className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full flex items-center justify-center"
                         style={{ background: '#FBBF24', border: '2px solid #1a0f0a' }}>
@@ -368,13 +336,12 @@ export default function MapPage() {
                     )}
                   </div>
 
-                  {/* Label */}
                   <div className="px-2 py-2">
                     <p className="text-[10px] font-black uppercase leading-tight line-clamp-2 text-center"
                       style={{
                         color: isActive ? 'white' : isLocked ? 'rgba(26,15,10,0.28)' : '#1a0f0a'
                       }}>
-                      {prov.name}
+                      {prov?.name}
                     </p>
                   </div>
                 </motion.button>
@@ -382,7 +349,6 @@ export default function MapPage() {
             })}
           </div>
 
-          {/* → */}
           <button onClick={() => scroll('right')}
             className="shrink-0 w-9 h-9 flex items-center justify-center rounded-xl"
             style={{ background: '#F14C38', border: '2.5px solid #1a0f0a',
@@ -393,7 +359,6 @@ export default function MapPage() {
         </div>
       </div>
 
-      {/* ════════════ DETAIL MODAL ════════════ */}
       <AnimatePresence>
         {selectedProv && selectedStatus && selectedStatus !== 'locked' && (
           <motion.div
@@ -414,7 +379,6 @@ export default function MapPage() {
               }}
               onClick={e => e.stopPropagation()}>
 
-              {/* Modal header bar */}
               <div className="flex items-center justify-between px-7 py-4 shrink-0"
                 style={{
                   background: selectedStatus === 'current' ? '#FBBF24' : '#F14C38',
@@ -432,13 +396,13 @@ export default function MapPage() {
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-widest leading-none"
                       style={{ color: selectedStatus === 'current' ? 'rgba(26,15,10,0.55)' : 'rgba(255,255,255,0.65)' }}>
-                      {selectedStatus === 'current' ? `⭐ ${t.world.inProgress}` :
-                       selectedStatus === 'completed' ? `✅ ${t.world.completed}` :
-                       `🗺️ ${t.world.provinceInfo}`}
+                      {selectedStatus === 'current' ? `⭐ ${t?.world?.inProgress}` :
+                       selectedStatus === 'completed' ? `✅ ${t?.world?.completed}` :
+                       `🗺️ ${t?.world?.provinceInfo}`}
                     </p>
                     <h2 className="text-xl font-black uppercase leading-tight"
                       style={{ color: selectedStatus === 'current' ? '#1a0f0a' : 'white' }}>
-                      {selectedProv.name}
+                      {selectedProv?.name}
                     </h2>
                   </div>
                 </div>
@@ -452,15 +416,13 @@ export default function MapPage() {
                 </button>
               </div>
 
-              {/* Modal body */}
               <div className="overflow-y-auto flex-1 p-7" style={{ scrollbarWidth: 'thin' }}>
                 <div className="grid md:grid-cols-2 gap-7">
 
-                  {/* Left */}
                   <div className="space-y-4">
                     <div className="rounded-[20px] overflow-hidden"
                       style={{ border: '4px solid #1a0f0a', boxShadow: '5px 5px 0 #1a0f0a', aspectRatio: '16/9' }}>
-                      <img src={selectedProv.image} alt={selectedProv.name} className="w-full h-full object-cover" />
+                      <img src={selectedProv?.image} alt={selectedProv?.name} className="w-full h-full object-cover" />
                     </div>
 
                     <div className="rounded-[18px] p-5"
@@ -470,16 +432,15 @@ export default function MapPage() {
                           <BookOpen size={12} className="text-white" strokeWidth={3} />
                         </div>
                         <span className="font-black text-xs uppercase tracking-widest" style={{ color: '#F14C38' }}>
-                          {t.world.subtitle.includes('Explore') ? 'Historical Summary' : 'Ringkasan Sejarah'}
+                          {isEnglish ? 'Historical Summary' : 'Ringkasan Sejarah'}
                         </span>
                       </div>
                       <p className="text-sm font-bold leading-relaxed" style={{ color: '#1a0f0a', opacity: 0.8 }}>
-                        {selectedProv.summary}
+                        {selectedProv?.summary}
                       </p>
                     </div>
                   </div>
 
-                  {/* Right */}
                   <div className="flex flex-col gap-4">
                     <div className="flex items-start gap-3">
                       <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
@@ -491,23 +452,23 @@ export default function MapPage() {
                       </div>
                       <div>
                         <p className="text-[9px] font-black uppercase tracking-widest leading-none mb-1" style={{ color: '#F14C38' }}>
-                          {t.world.subtitle.includes('Explore') ? 'Capital' : 'Ibukota'}: {selectedProv.capital}
+                          {isEnglish ? 'Capital' : 'Ibukota'}: {selectedProv?.capital}
                         </p>
                         <h3 className="text-2xl font-black leading-tight" style={{ color: '#1a0f0a' }}>
-                          {selectedProv.tradition.name}
+                          {selectedProv?.tradition?.name}
                         </h3>
                       </div>
                     </div>
 
                     <div className="rounded-[18px] overflow-hidden"
                       style={{ border: '3px solid #1a0f0a', boxShadow: '3px 3px 0 #1a0f0a', height: '140px' }}>
-                      <img src={selectedProv.tradition.image} alt="" className="w-full h-full object-cover" />
+                      <img src={selectedProv?.tradition?.image} alt="" className="w-full h-full object-cover" />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { label: t.world.subtitle.includes('Explore') ? 'Philosophy' : 'Filosofi', content: selectedProv.tradition.philosophy },
-                        { label: t.world.subtitle.includes('Explore') ? 'Description' : 'Deskripsi', content: selectedProv.tradition.desc },
+                        { label: isEnglish ? 'Philosophy' : 'Filosofi', content: selectedProv?.tradition?.philosophy },
+                        { label: isEnglish ? 'Description' : 'Deskripsi', content: selectedProv?.tradition?.desc },
                       ].map(card => (
                         <div key={card.label} className="rounded-xl p-3.5"
                           style={{ background: 'white', border: '2px solid rgba(26,15,10,0.12)' }}>
@@ -522,19 +483,18 @@ export default function MapPage() {
                       ))}
                     </div>
 
-                    {/* CTA */}
                     {selectedStatus === 'completed' ? (
                       <div className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2"
                         style={{ background: '#F4F1E0', border: '3px solid rgba(26,15,10,0.2)' }}>
                         <CheckCircle size={16} strokeWidth={3} style={{ color: 'rgba(26,15,10,0.4)' }} />
                         <span className="font-black text-sm uppercase tracking-wide" style={{ color: 'rgba(26,15,10,0.4)' }}>
-                          {t.world.completed}
+                          {t?.world?.completed}
                         </span>
                       </div>
                     ) : (
                       <motion.button
                         whileTap={{ scale: 0.97 }}
-                        onClick={() => navigate(`/app/quest?province=${selectedProv.id}`)}
+                        onClick={() => navigate(`/app/quest?province=${selectedProv?.id}`)}
                         className="w-full py-4 font-black text-base uppercase rounded-2xl"
                         style={{
                           background: selectedStatus === 'current' ? '#FBBF24' : '#F14C38',
@@ -554,9 +514,9 @@ export default function MapPage() {
                           (e.currentTarget).style.boxShadow = '0 5px 0 #1a0f0a';
                           (e.currentTarget).style.transform = 'none';
                         }}>
-                        {selectedStatus === 'current' 
-                          ? (t.world.subtitle.includes('Explore') ? '⚔️ Continue Adventure' : '⚔️ Lanjutkan Petualangan')
-                          : (t.world.subtitle.includes('Explore') ? '🗺️ Start Adventure' : '🗺️ Mulai Petualangan')}
+                        {selectedStatus === 'current'
+                          ? (isEnglish ? '⚔️ Continue Adventure' : '⚔️ Lanjutkan Petualangan')
+                          : (isEnglish ? '🗺️ Start Adventure' : '🗺️ Mulai Petualangan')}
                       </motion.button>
                     )}
                   </div>
