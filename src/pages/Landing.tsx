@@ -551,7 +551,6 @@ export default function LandingPage() {
 
       {/* ===================== WARTA NUSANTARA SECTION ===================== */}
       <section className="py-24 bg-primary text-white relative overflow-hidden">
-        {/* Background pattern */}
         <div 
           className="absolute inset-0 opacity-10"
           style={{ 
@@ -564,41 +563,29 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             
-            {/* Left side - Content */}
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
               viewport={{ once: true }}
             >
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full mb-6 border border-white/20">
-                <Newspaper size={18} className="text-[#ffce00]" />
-                <span className="text-sm font-bold uppercase tracking-wider">
-                  {t.landing.hero.title.includes('Explore') ? 'Latest Update' : 'Update Terbaru'}
-                </span>
-              </div>
-
-              {/* Title */}
               <h2 className="text-4xl md:text-5xl font-display font-extrabold mb-6 leading-tight">
                 <span className="text-white">Warta </span>
                 <span className="text-[#ffce00]">Nusantara</span>
               </h2>
 
-              {/* Description */}
               <p className="text-lg text-white/90 font-medium leading-relaxed mb-8">
                 {t.landing.hero.title.includes('Explore')
                   ? 'Your hub for the latest Indonesian cultural news. Discover festivals, traditional events, conservation efforts, and creative UMKM promotions.'
                   : 'Pusat informasi budaya terkini. Temukan festival budaya, acara tradisi, berita pelestarian, hingga promosi UMKM kreatif daerah.'}
               </p>
 
-              {/* Feature list */}
               <div className="space-y-4 mb-8">
                 {[
-                  { emoji: '🎉', labelId: 'Festival Budaya', labelEn: 'Cultural Festivals' },
-                  { emoji: '🎭', labelId: 'Acara Tradisi', labelEn: 'Traditional Events' },
-                  { emoji: '🏛️', labelId: 'Pelestarian Budaya', labelEn: 'Cultural Conservation' },
-                  { emoji: '🛍️', labelId: 'UMKM Kreatif', labelEn: 'Creative SMEs' },
+                  { icon: '/icons/festival.png', labelId: 'Festival Budaya', labelEn: 'Cultural Festivals' },
+                  { icon: '/icons/tradition.png', labelId: 'Acara Tradisi', labelEn: 'Traditional Events' },
+                  { icon: '/icons/conservation.png', labelId: 'Pelestarian Budaya', labelEn: 'Cultural Conservation' },
+                  { icon: '/icons/umkm.png', labelId: 'UMKM Kreatif', labelEn: 'Creative SMEs' },
                 ].map((item, i) => (
                   <motion.div
                     key={i}
@@ -608,9 +595,16 @@ export default function LandingPage() {
                     viewport={{ once: true }}
                     className="flex items-center gap-3"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center text-xl border border-white/20">
-                      {item.emoji}
+                    {/* Container Ikon */}
+                    <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 overflow-hidden px-2">
+                      <img 
+                        src={item.icon} 
+                        alt={item.labelId} 
+                        className="w-full h-full object-contain" 
+                      />
                     </div>
+                    
+                    {/* Teks Label */}
                     <span className="font-bold text-white">
                       {t.landing.hero.title.includes('Explore') ? item.labelEn : item.labelId}
                     </span>
@@ -618,7 +612,6 @@ export default function LandingPage() {
                 ))}
               </div>
 
-              {/* CTA */}
               <Link 
                 to="/app/warta"
                 className="inline-flex items-center gap-2 bg-white text-primary px-8 py-4 rounded-2xl font-bold text-lg hover:bg-[#ffce00] hover:text-text transition-all shadow-xl hover:-translate-y-1"
@@ -629,7 +622,7 @@ export default function LandingPage() {
               </Link>
             </motion.div>
 
-            {/* Right side - Visual */}
+            {/* Right side - Visual (DIPERBAIKI DI SINI) */}
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -637,10 +630,8 @@ export default function LandingPage() {
               viewport={{ once: true }}
               className="relative"
             >
-              {/* Decorative circles */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#ffce00]/20 rounded-full blur-3xl" />
               
-              {/* Mock news cards */}
               <div className="relative space-y-4">
                 {/* Card 1 */}
                 <motion.div
@@ -651,21 +642,15 @@ export default function LandingPage() {
                   className="bg-white rounded-2xl p-6 shadow-2xl transform rotate-2 hover:rotate-0 transition-transform"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-xl bg-linear-to-br from-primary to-[#D4AF37] flex items-center justify-center text-2xl shrink-0">
-                      🎉
+                    <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
+                      <img src="/news/batik-festival.jpg" alt="Festival Batik" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold text-primary uppercase mb-1">
-                        {t.landing.hero.title.includes('Explore') ? 'Festival' : 'Festival'}
-                      </div>
+                      <div className="text-xs font-bold text-primary uppercase mb-1">Festival</div>
                       <h4 className="font-bold text-text text-sm mb-1 line-clamp-1">
-                        {t.landing.hero.title.includes('Explore') 
-                          ? 'Batik Festival 2025'
-                          : 'Festival Batik 2025'}
+                        {t.landing.hero.title.includes('Explore') ? 'Batik Festival 2025' : 'Festival Batik 2025'}
                       </h4>
-                      <p className="text-xs text-text-light">
-                        {t.landing.hero.title.includes('Explore') ? '2 days ago • Solo' : '2 hari lalu • Solo'}
-                      </p>
+                      <p className="text-xs text-text-light">{t.landing.hero.title.includes('Explore') ? '2 days ago • Solo' : '2 hari lalu • Solo'}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -679,19 +664,15 @@ export default function LandingPage() {
                   className="bg-white rounded-2xl p-6 shadow-2xl transform -rotate-1 hover:rotate-0 transition-transform"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-xl bg-linear-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-2xl shrink-0">
-                      🛍️
+                    <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
+                      <img src="news/tenun-paris.jpg" alt="Tenun NTT" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-bold text-emerald-600 uppercase mb-1">UMKM</div>
                       <h4 className="font-bold text-text text-sm mb-1 line-clamp-1">
-                        {t.landing.hero.title.includes('Explore')
-                          ? 'NTT Weaving Goes to Paris'
-                          : 'Tenun NTT ke Paris'}
+                        {t.landing.hero.title.includes('Explore') ? 'NTT Weaving Goes to Paris' : 'Tenun NTT ke Paris'}
                       </h4>
-                      <p className="text-xs text-text-light">
-                        {t.landing.hero.title.includes('Explore') ? '5 days ago • Jakarta' : '5 hari lalu • Jakarta'}
-                      </p>
+                      <p className="text-xs text-text-light">{t.landing.hero.title.includes('Explore') ? '5 days ago • Jakarta' : '5 hari lalu • Jakarta'}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -705,29 +686,25 @@ export default function LandingPage() {
                   className="bg-white rounded-2xl p-6 shadow-2xl transform rotate-1 hover:rotate-0 transition-transform"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="w-16 h-16 rounded-xl bg-linear-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-2xl shrink-0">
-                      🏛️
+                    <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
+                      <img src="/news/wayang-sekolah.jpg" alt="Wayang" className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-bold text-blue-600 uppercase mb-1">
                         {t.landing.hero.title.includes('Explore') ? 'Conservation' : 'Pelestarian'}
                       </div>
                       <h4 className="font-bold text-text text-sm mb-1 line-clamp-1">
-                        {t.landing.hero.title.includes('Explore')
-                          ? 'Wayang in School Curriculum'
-                          : 'Wayang Masuk Kurikulum'}
+                        {t.landing.hero.title.includes('Explore') ? 'Wayang in School Curriculum' : 'Wayang Masuk Kurikulum'}
                       </h4>
-                      <p className="text-xs text-text-light">
-                        {t.landing.hero.title.includes('Explore') ? '1 week ago • Yogyakarta' : '1 minggu lalu • Yogyakarta'}
-                      </p>
+                      <p className="text-xs text-text-light">{t.landing.hero.title.includes('Explore') ? '1 week ago • Yogyakarta' : '1 minggu lalu • Yogyakarta'}</p>
                     </div>
                   </div>
                 </motion.div>
-              </div>
-            </motion.div>
+              </div> {/* TUTUP div relative space-y-4 */}
+            </motion.div> {/* TUTUP motion.div Visual sisi kanan */}
 
-          </div>
-        </div>
+          </div> {/* TUTUP div grid */}
+        </div> {/* TUTUP div max-w-7xl */}
       </section>
 
       {/* ===================== FAQ ===================== */}

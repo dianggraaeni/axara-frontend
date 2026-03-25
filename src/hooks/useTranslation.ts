@@ -248,7 +248,7 @@ const translations: Record<Language, Translations> = {
         ctaLearn: 'Lihat Fitur',
       },
       features: {
-        title: 'Petualangan Budaya Interaktif',
+        title: 'Fitur',
         world: {
           title: 'AxaraWorld — Peta Eksplorasi',
           desc: 'Buka peta Indonesia, klik provinsi, dan temukan budaya seperti rumah adat, makanan, pakaian, alat musik, hingga sejarah singkat.',
