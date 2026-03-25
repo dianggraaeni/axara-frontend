@@ -6,7 +6,7 @@ import {
   Compass, BookOpen, Target, Trophy, ArrowRight,
   Flame, Menu, X, CheckCircle2, RefreshCw, Newspaper
 } from 'lucide-react';
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import FloatingChat from '../components/FloatingChat';
 import { useTranslation } from '../hooks/useTranslation';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -43,7 +43,6 @@ const getAvatarProps = (name: string) => {
 };
 
 export default function LandingPage() {
-  // ✅ Tambahkan `language` dan `setLanguage` dari useTranslation
   const { t, language, setLanguage } = useTranslation();
   const isEn = language === 'en';
 
@@ -54,9 +53,48 @@ export default function LandingPage() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [formSubmitted, setFormSubmitted] = useState(false);
 
+  // ✨ Active section state untuk highlight navbar
+  const [activeSection, setActiveSection] = useState<string>('');
+
   const isLoggedIn = !!localStorage.getItem('user') || !!localStorage.getItem('token');
 
-  // ✅ FEATURES — mengambil dari t.landing.features (sudah bilingual di useTranslation)
+  // ✨ IntersectionObserver: deteksi section mana yang sedang terlihat
+  useEffect(() => {
+    // Menambahkan 'hero' agar saat di paling atas tidak ada menu yang ter-highlight
+    const sectionIds = ['hero', 'features', 'how-it-works', 'faq'];
+
+    const observers: IntersectionObserver[] = [];
+
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              setActiveSection(id);
+            }
+          });
+        },
+        {
+          threshold: 0.3,
+          rootMargin: '-80px 0px 0px 0px',
+        }
+      );
+
+      observer.observe(el);
+      observers.push(observer);
+    });
+
+    return () => {
+      observers.forEach((obs) => obs.disconnect());
+    };
+  }, []);
+
+  // Helper: apakah link navbar sedang aktif
+  const isNavActive = (sectionId: string) => activeSection === sectionId;
+
   const features = [
     {
       id: 'world',
@@ -92,7 +130,6 @@ export default function LandingPage() {
     }
   ];
 
-  // ✅ STEPS — menggunakan `isEn` bukan string-matching
   const steps = isEn ? [
     { icon: Compass, label: 'Explore Provinces' },
     { icon: BookOpen, label: 'Learn Culture' },
@@ -109,7 +146,6 @@ export default function LandingPage() {
     { icon: Trophy, label: 'Naik Peringkat' },
   ];
 
-// ✅ TESTIMONIALS — Dibuat bilingual
   const testimonialList = isEn ? [
     { text: 'This platform makes learning Indonesian culture feel like playing a game.', author: 'Budi S.', role: 'Student' },
     { text: 'A beautiful way to introduce Nusantara culture to the younger generation.', author: 'Mrs. Ratna', role: 'Teacher' },
@@ -138,7 +174,6 @@ export default function LandingPage() {
     { text: 'AXARA berhasil membuat saya bangga dengan warisan budaya bangsa sendiri.', author: 'Agus T.', role: 'Karyawan Swasta' },
   ];
 
-  // ✅ FAQ — menggunakan `isEn` dan `t.landing.hero.description` untuk isi dinamis
   const faqs = isEn ? [
     {
       q: 'What is AXARA?',
@@ -227,13 +262,42 @@ export default function LandingPage() {
             </div>
 
             <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="font-bold text-text-light hover:text-primary transition-colors">
+
+              {/* ✨ Fitur Utama nav link - Diperbaiki: Hapus background & border aktif */}
+              <a
+                href="#features"
+                className={`font-bold transition-all duration-200 px-3 py-1.5 ${
+                  isNavActive('features')
+                    ? 'text-primary'
+                    : 'text-text-light hover:text-primary'
+                }`}
+              >
                 {t.landing.features.title}
               </a>
-              <a href="#how-it-works" className="font-bold text-text-light hover:text-primary transition-colors">
+
+              {/* ✨ Cara Bermain nav link - Diperbaiki: Hapus background & border aktif */}
+              <a
+                href="#how-it-works"
+                className={`font-bold transition-all duration-200 px-3 py-1.5 ${
+                  isNavActive('how-it-works')
+                    ? 'text-primary'
+                    : 'text-text-light hover:text-primary'
+                }`}
+              >
                 {isEn ? 'How to Play' : 'Cara Bermain'}
               </a>
-              <a href="#faq" className="font-bold text-text-light hover:text-primary transition-colors">FAQ</a>
+
+              {/* ✨ FAQ nav link - Diperbaiki: Hapus background & border aktif */}
+              <a
+                href="#faq"
+                className={`font-bold transition-all duration-200 px-3 py-1.5 ${
+                  isNavActive('faq')
+                    ? 'text-primary'
+                    : 'text-text-light hover:text-primary'
+                }`}
+              >
+                FAQ
+              </a>
               
               <div className="flex items-center gap-4 bg-cream px-4 py-2 rounded-2xl border border-cream-dark">
                 <div className="flex items-center gap-2">
@@ -262,10 +326,57 @@ export default function LandingPage() {
             </button>
           </div>
         </div>
+
+        {/* ✨ Mobile menu - Diperbaiki: Hapus background & border aktif */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-cream-dark px-4 py-4 space-y-2">
+            <a
+              href="#features"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`block font-bold py-2 px-3 transition-all duration-200 ${
+                isNavActive('features')
+                  ? 'text-primary'
+                  : 'text-text-light hover:text-primary'
+              }`}
+            >
+              {t.landing.features.title}
+            </a>
+            <a
+              href="#how-it-works"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`block font-bold py-2 px-3 transition-all duration-200 ${
+                isNavActive('how-it-works')
+                  ? 'text-primary'
+                  : 'text-text-light hover:text-primary'
+              }`}
+            >
+              {isEn ? 'How to Play' : 'Cara Bermain'}
+            </a>
+            <a
+              href="#faq"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`block font-bold py-2 px-3 transition-all duration-200 ${
+                isNavActive('faq')
+                  ? 'text-primary'
+                  : 'text-text-light hover:text-primary'
+              }`}
+            >
+              FAQ
+            </a>
+            <Link
+              to="/app"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="block bg-primary text-white px-4 py-3 rounded-2xl font-bold text-center mt-2"
+            >
+              {t.landing.hero.ctaStart}
+            </Link>
+          </div>
+        )}
       </nav>
 
       {/* ===================== HERO SECTION ===================== */}
       <section 
+        id="hero"
         className="relative pt-32 pb-0 bg-primary overflow-hidden flex flex-col justify-between min-h-[90vh] bg-cover bg-center"
         style={{ backgroundImage: `linear-gradient(rgba(240, 78, 54, 0.4), rgba(240, 78, 54, 0.6)), url('/bg-hero.jpg')` }}
       >
