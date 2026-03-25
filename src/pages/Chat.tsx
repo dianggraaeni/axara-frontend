@@ -40,33 +40,30 @@ const BotAvatar = () => (
 export default function ChatPage() {
   const { t } = useTranslation();
 
-  const isEnglish = t?.chat?.greeting?.includes('Hello');
+  // Memasukkan prompt dari config agar otomatis switch bahasa
+  const QUICK_PROMPTS = [
+    t?.verse?.suggestHistory || 'Majapahit',
+    t?.verse?.suggestTradition || 'Bali',
+    t?.verse?.suggestFood || 'Kuliner',
+    t?.verse?.suggestMusic || 'Musik'
+  ];
 
-  const QUICK_PROMPTS = isEnglish
-    ? [
-        '🏯 Story about Majapahit',
-        '🎭 Unique Bali traditions',
-        '🍜 Javanese cuisine',
-        '🎵 Traditional instruments',
-      ]
-    : [
-        '🏯 Cerita tentang Majapahit',
-        '🎭 Tradisi unik Bali',
-        '🍜 Kuliner khas Jawa',
-        '🎵 Alat musik tradisional',
-      ];
-
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      role: 'model',
-      text: t?.chat?.greeting ?? '',
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput]       = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef    = useRef<HTMLTextAreaElement>(null);
+
+  // Efek untuk mengisi pesan awal saat 't' sudah siap
+  useEffect(() => {
+    if (t?.verse?.greeting && messages.length === 0) {
+      setMessages([{
+        id: '1',
+        role: 'model',
+        text: t.verse.greeting,
+      }]);
+    }
+  }, [t, messages.length]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -99,9 +96,9 @@ export default function ChatPage() {
       setMessages((prev) => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'model',
-        text: isEnglish
-          ? 'Sorry, an error occurred. Please try again!'
-          : 'Maaf, terjadi kesalahan. Coba lagi ya!',
+        text: t?.common?.loading === 'Memuat' 
+          ? 'Maaf, terjadi kesalahan. Coba lagi ya!' 
+          : 'Sorry, an error occurred. Please try again!',
       }]);
     } finally {
       setIsLoading(false);
@@ -136,10 +133,10 @@ export default function ChatPage() {
         </div>
         <div className="flex-1">
           <h1 className="text-lg font-black leading-none text-white uppercase">
-            Axara <span style={{ color: '#FBBF24' }}>Guide</span>
+            {t?.verse?.title?.split(' ')[0] || 'AXARA'} <span style={{ color: '#FBBF24' }}>{t?.verse?.title?.split(' ')[1] || 'VERSE'}</span>
           </h1>
           <p className="text-[9px] font-black tracking-widest uppercase leading-none mt-0.5 text-white/60">
-            {isEnglish ? 'AI Nusantara Culture Guide' : 'AI Pemandu Budaya Nusantara'}
+            {t?.verse?.subtitle}
           </p>
         </div>
 
@@ -241,7 +238,7 @@ export default function ChatPage() {
             className="text-[9px] font-black uppercase tracking-widest mb-2 px-1"
             style={{ color: 'rgba(26,15,10,0.4)' }}
           >
-            {isEnglish ? 'Start with these questions:' : 'Mulai dengan pertanyaan ini:'}
+            {t?.verse?.suggestTitle}
           </p>
           <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {QUICK_PROMPTS.map((prompt) => (
@@ -289,7 +286,7 @@ export default function ChatPage() {
                   handleSend();
                 }
               }}
-              placeholder={t?.chat?.placeholder ?? ''}
+              placeholder={t?.verse?.placeholder ?? '...'}
               rows={1}
               className="w-full px-4 py-3 font-bold text-sm resize-none"
               style={{
@@ -325,9 +322,9 @@ export default function ChatPage() {
           className="text-center text-[9px] font-black uppercase tracking-widest mt-2"
           style={{ color: 'rgba(26,15,10,0.3)' }}
         >
-          {isEnglish
-            ? 'Enter to send · Shift+Enter for new line'
-            : 'Enter untuk kirim · Shift+Enter untuk baris baru'}
+          {t?.common?.loading === 'Memuat' 
+            ? 'Enter untuk kirim · Shift+Enter untuk baris baru' 
+            : 'Enter to send · Shift+Enter for new line'}
         </p>
       </div>
     </div>

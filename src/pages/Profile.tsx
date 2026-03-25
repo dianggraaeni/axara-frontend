@@ -48,7 +48,8 @@ export default function ProfilePage() {
   const [saveError, setSaveError]   = useState('');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const isEnglish = t?.profile?.subtitle?.includes('Explorer');
+  // ✨ Fix 1: Deteksi bahasa yang lebih akurat dan tidak rawan error
+  const isEnglish = t?.common?.back === 'Back';
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -388,11 +389,12 @@ export default function ProfilePage() {
           transition={{ delay: 0.12 }}
           className="grid grid-cols-2 md:grid-cols-4 gap-3"
         >
+          {/* ✨ Fix 3: Gunakan key totalXP yang sudah diupdate di config.ts */}
           {[
-            { icon: <Star size={20} strokeWidth={3} />, label: t?.profile?.level,     value: level,                            emoji: '⭐' },
-            { icon: <Zap  size={20} strokeWidth={3} />, label: t?.profile?.totalXP,   value: xp,                               emoji: '⚡' },
-            { icon: <MapPin size={20} strokeWidth={3}/>, label: t?.profile?.provinces, value: `${provincesCompleted}/${provincesUnlocked}`, emoji: '🗺️' },
-            { icon: <Shield size={20} strokeWidth={3}/>, label: t?.profile?.badges,    value: badgeCount,                       emoji: '🛡️' },
+            { icon: <Star size={20} strokeWidth={3} />,   label: t?.profile?.level,      value: level,                                    emoji: '⭐' },
+            { icon: <Zap  size={20} strokeWidth={3} />,   label: t?.profile?.totalXP,    value: xp,                                       emoji: '⚡' },
+            { icon: <MapPin size={20} strokeWidth={3} />, label: t?.profile?.provinces,  value: `${provincesCompleted}/${provincesUnlocked}`, emoji: '🗺️' },
+            { icon: <Shield size={20} strokeWidth={3} />, label: t?.profile?.badges,     value: badgeCount,                               emoji: '🛡️' },
           ].map((s, i) => (
             <motion.div
               key={s.label}
@@ -483,9 +485,14 @@ export default function ProfilePage() {
                       <div className="mt-3 px-2.5 py-1 rounded-lg"
                         style={{ background: '#F4F1E0', border: '2px solid rgba(26,15,10,0.1)' }}>
                         <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: '#F14C38' }}>
+                          {/* ✨ Fix 2: Format tanggal mengikuti bahasa aktif */}
                           {ub?.unlockedAt
-                            ? new Date(ub.unlockedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
-                            : 'Baru saja'}
+                            ? new Date(ub.unlockedAt).toLocaleDateString(isEnglish ? 'en-US' : 'id-ID', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                              })
+                            : (isEnglish ? 'Just now' : 'Baru saja')}
                         </span>
                       </div>
                     </div>

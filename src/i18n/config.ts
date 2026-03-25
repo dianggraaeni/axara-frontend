@@ -6,7 +6,7 @@ export interface Translations {
   common: {
     back: string; next: string; submit: string; reset: string;
     loading: string; done: string; close: string; cancel: string;
-    confirm: string; or: string; day: string;
+    confirm: string; or: string; day: string; edit: string; // ✨ Added edit
   };
   nav: {
     home: string; world: string; battle: string; verse: string;
@@ -86,6 +86,33 @@ export interface Translations {
     totalXP: string;
     perProvince: string;
   };
+  // ✨ TAMBAHAN UNTUK VERSE & PROFILE
+  verse: {
+    title: string;
+    subtitle: string;
+    greeting: string;
+    placeholder: string;
+    suggestTitle: string;
+    suggestHistory: string;
+    suggestTradition: string;
+    suggestFood: string;
+    suggestMusic: string;
+  };
+  profile: {
+    title: string;
+    subtitle: string; // ✨ Added
+    level: string;
+    xp: string;
+    totalXP: string; // ✨ Added
+    provinces: string; // ✨ Added
+    badges: string; // ✨ Added
+    badgeCollection: string; // ✨ Added
+    totalBadges: string;
+    badgesSection: string;
+    noBadges: string;
+    logout: string;
+    editProfile: string;
+  };
 }
 
 export const translations: Record<Language, Translations> = {
@@ -93,7 +120,7 @@ export const translations: Record<Language, Translations> = {
     common: {
       back: 'Kembali', next: 'Lanjut', submit: 'Kirim', reset: 'Reset',
       loading: 'Memuat', done: 'Selesai', close: 'Tutup', cancel: 'Batal',
-      confirm: 'Konfirmasi', or: 'atau', day: 'Hari'
+      confirm: 'Konfirmasi', or: 'atau', day: 'Hari', edit: 'Edit'
     },
     nav: {
       home: 'Beranda', world: 'AxaraWorld', battle: 'AxaraBattle',
@@ -114,17 +141,28 @@ export const translations: Record<Language, Translations> = {
         description: 'AXARA adalah platform gamifikasi edukasi yang mengajak pengguna menjelajahi budaya Indonesia melalui peta interaktif, mini-games, dan AI storytelling.',
         ctaStart: 'Mulai Menjelajah', ctaLearn: 'Lihat Fitur', welcome: 'Selamat Datang!',
       },
-      features: {
-        title: 'Fitur Utama',
-        world: { title: 'AxaraWorld', desc: 'Jelajahi budaya Nusantara lewat peta interaktif secara seru.' },
-        battle: { title: 'AxaraBattle', desc: 'Uji pengetahuan budayamu lewat berbagai mini-games seru.' },
-        verse: { title: 'AxaraVerse', desc: 'Tanyakan apa saja tentang budaya ke AI lewat storytelling.' },
-        badge: { title: 'AxaraBadge', desc: 'Kumpulkan XP dan badge, buktikan perjalananmu.' },
+    features: {
+      title: 'Fitur Utama',
+      world: { 
+        title: 'AxaraWorld', 
+        desc: 'Jelajahi budaya Nusantara lewat peta interaktif dengan cara yang seru dan mudah dipahami.' 
       },
+      battle: { 
+        title: 'AxaraBattle', 
+        desc: 'Uji pengetahuan budaya kamu lewat berbagai mini-games seru seperti bermain game.' 
+      },
+      verse: { 
+        title: 'AxaraVerse', 
+        desc: 'Tanya budaya ke AI dan jelajahi cerita sejarah lewat storytelling interaktif.' 
+      },
+      badge: { 
+        title: 'AxaraBadge', 
+        desc: 'Kumpulkan XP dan badge, lalu naik peringkat sebagai penjelajah budaya.' 
+      },
+    },
       faq: { title: 'Pertanyaan Sering Diajukan' },
       contact: { title: 'Hubungi Kami', name: 'Nama Anda', email: 'Email Anda', message: 'Pesan Anda', send: 'Kirim Pesan' }
     },
-    // ✨ ISI DATA ID UNTUK MAP & QUEST
     world: {
       title: 'AXARA WORLD',
       subtitle: 'Jelajahi Nusantara',
@@ -153,13 +191,39 @@ export const translations: Record<Language, Translations> = {
       selectQuest: 'Pilih Tantangan',
       totalXP: 'Total Potensi',
       perProvince: 'per Provinsi',
+    },
+    verse: {
+      title: 'AXARA VERSE',
+      subtitle: 'Pemandu Budaya Nusantara',
+      greeting: 'Halo! Saya Axara Guide. Ada yang ingin kamu tanyakan tentang budaya Indonesia hari ini?',
+      placeholder: 'Tanyakan sesuatu tentang sejarah, tradisi, atau kuliner...',
+      suggestTitle: 'Mulai dengan pertanyaan ini:',
+      suggestHistory: '🏯 Cerita tentang Majapahit',
+      suggestTradition: '🎭 Tradisi unik Bali',
+      suggestFood: '🍜 Kuliner khas Jawa',
+      suggestMusic: '🎵 Alat musik tradisional'
+    },
+    profile: {
+      title: 'PROFIL PENJELAJAH',
+      subtitle: 'Identitas Budaya Anda',
+      level: 'Level',
+      xp: 'Pengalaman',
+      totalXP: 'Total XP',
+      provinces: 'Provinsi',
+      badges: 'Badge',
+      badgeCollection: 'Koleksi Badge Anda',
+      totalBadges: 'Badge Dikoleksi',
+      badgesSection: 'Koleksi Badge Anda',
+      noBadges: 'Belum ada badge yang terbuka. Ayo jelajahi peta!',
+      logout: 'Keluar Akun',
+      editProfile: 'Edit Profil'
     }
   },
   en: {
     common: {
       back: 'Back', next: 'Next', submit: 'Submit', reset: 'Reset',
       loading: 'Loading', done: 'Done', close: 'Close', cancel: 'Cancel',
-      confirm: 'Confirm', or: 'or', day: 'Day'
+      confirm: 'Confirm', or: 'or', day: 'Day', edit: 'Edit'
     },
     nav: {
       home: 'Home', world: 'AxaraWorld', battle: 'AxaraBattle',
@@ -180,17 +244,28 @@ export const translations: Record<Language, Translations> = {
         description: 'AXARA is a cultural gamification platform where users explore Indonesian culture through interactive maps and AI.',
         ctaStart: 'Start Exploring', ctaLearn: 'View Features', welcome: 'Welcome!',
       },
-      features: {
-        title: 'Main Features',
-        world: { title: 'AxaraWorld', desc: 'Explore Indonesian culture through an interactive map.' },
-        battle: { title: 'AxaraBattle', desc: 'Test your cultural knowledge through fun mini-games.' },
-        verse: { title: 'AxaraVerse', desc: 'Ask AI about culture and history through storytelling.' },
-        badge: { title: 'AxaraBadge', desc: 'Collect XP and badges to prove your journey.' },
+    features: {
+      title: 'Main Features',
+      world: { 
+        title: 'AxaraWorld', 
+        desc: 'Explore Indonesian culture through an interactive map in a fun and easy way.' 
       },
+      battle: { 
+        title: 'AxaraBattle', 
+        desc: 'Test your cultural knowledge through fun mini-games like playing a game.' 
+      },
+      verse: { 
+        title: 'AxaraVerse', 
+        desc: 'Ask AI about culture and explore historical stories through interactive storytelling.' 
+      },
+      badge: { 
+        title: 'AxaraBadge', 
+        desc: 'Collect XP and badges, then climb the ranks as a culture explorer.' 
+      },
+    },
       faq: { title: 'Frequently Asked Questions' },
       contact: { title: 'Contact Us', name: 'Your Name', email: 'Your Email', message: 'Your Message', send: 'Send Message' }
     },
-    // ✨ ISI DATA EN UNTUK MAP & QUEST
     world: {
       title: 'AXARA WORLD',
       subtitle: 'Explore Nusantara',
@@ -219,6 +294,32 @@ export const translations: Record<Language, Translations> = {
       selectQuest: 'Select Challenge',
       totalXP: 'Potential Total',
       perProvince: 'per Province',
+    },
+    verse: {
+      title: 'AXARA VERSE',
+      subtitle: 'Nusantara Culture Guide',
+      greeting: 'Hello! I am Axara Guide. Anything you want to ask about Indonesian culture today?',
+      placeholder: 'Ask about history, traditions, or culinary...',
+      suggestTitle: 'Start with these questions:',
+      suggestHistory: '🏯 Story about Majapahit',
+      suggestTradition: '🎭 Unique Bali traditions',
+      suggestFood: '🍜 Javanese culinary',
+      suggestMusic: '🎵 Traditional instruments'
+    },
+    profile: {
+      title: 'EXPLORER PROFILE',
+      subtitle: 'Your Cultural Identity',
+      level: 'Level',
+      xp: 'Experience',
+      totalXP: 'Total XP',
+      provinces: 'Provinces',
+      badges: 'Badges',
+      badgeCollection: 'Your Badge Collection',
+      totalBadges: 'Badges Collected',
+      badgesSection: 'Your Badge Collection',
+      noBadges: 'No badges unlocked yet. Start exploring the map!',
+      logout: 'Logout Account',
+      editProfile: 'Edit Profile'
     }
   }
 };

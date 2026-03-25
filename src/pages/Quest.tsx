@@ -16,6 +16,7 @@ import AksaraScramble from '../components/games/AksaraScramble';
 import BadgeUnlockModal from '../components/BadgeUnlockModal';
 import { useTranslation } from '../hooks/useTranslation';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useSound } from '../hooks/useSound'; // ✨ Tambahkan ini di deretan import atas
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface QuizQuestion {
@@ -114,6 +115,9 @@ function GuessCultureGame({
   const [showExplanation, setShowExplanation] = useState(false);
   const scoreRef = useRef(0);
 
+  // ✨ Inisialisasi sound hook
+  const { playCorrect, playWrong, playClick } = useSound();
+
   const question = questions[currentIndex];
   const progress = ((currentIndex + (selectedAnswer !== null ? 1 : 0)) / questions.length) * 100;
   const LABELS   = ['A', 'B', 'C', 'D'];
@@ -124,10 +128,18 @@ function GuessCultureGame({
     const correct = idx === question?.correctIndex;
     setIsCorrect(correct);
     setShowExplanation(true);
-    if (correct) scoreRef.current += 1;
+
+    // ✨ Putar suara sesuai jawaban
+    if (correct) {
+      playCorrect();
+      scoreRef.current += 1;
+    } else {
+      playWrong();
+    }
   };
 
   const handleNext = () => {
+    playClick(); // ✨ Suara klik saat lanjut
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(c => c + 1);
       setSelectedAnswer(null);
@@ -142,7 +154,7 @@ function GuessCultureGame({
     <GameWrapper>
       <header className="shrink-0 px-5 pt-4 pb-3 flex items-center gap-3">
         <button
-          onClick={onBack}
+          onClick={() => { playClick(); onBack(); }} // ✨ Suara klik saat back
           className="w-12 h-12 flex items-center justify-center rounded-xl shrink-0"
           style={{ background: 'white', border: '3px solid #1a0f0a', boxShadow: '3px 3px 0 #1a0f0a', transition: 'all 0.1s' }}
           {...makePressHandlers('3px 3px 0 #1a0f0a')}
