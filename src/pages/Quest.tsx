@@ -31,22 +31,61 @@ interface QuizQuestion {
 type GameId = 'guess' | 'memory' | 'swipe' | 'scramble';
 
 const PROVINCE_NAMES: Record<string, string> = {
-  'bali': 'Bali',
-  'jawa-tengah': 'Jawa Tengah',
+  // SUMATRA
+  'di-aceh': 'Aceh',
+  'sumatera-utara': 'Sumatera Utara',
   'sumatera-barat': 'Sumatera Barat',
-  'sulawesi-selatan': 'Sulawesi Selatan',
-  'papua': 'Papua',
+  'riau': 'Riau',
+  'kepulauan-riau': 'Kepulauan Riau',
+  'jambi': 'Jambi',
+  'sumatera-selatan': 'Sumatera Selatan',
+  'bangka-belitung': 'Bangka Belitung',
+  'bengkulu': 'Bengkulu',
+  'lampung': 'Lampung',
+  // JAWA
+  'probanten': 'Banten',
   'dki-jakarta': 'DKI Jakarta',
   'jawa-barat': 'Jawa Barat',
+  'jawa-tengah': 'Jawa Tengah',
+  'daerah-istimewa-yogyakarta': 'DI Yogyakarta',
   'jawa-timur': 'Jawa Timur',
+  // BALI & NUSA TENGGARA
+  'bali': 'Bali',
+  'nusa-tenggara-barat': 'Nusa Tenggara Barat',
+  'nusa-tenggara-timur': 'Nusa Tenggara Timur',
+  // KALIMANTAN
+  'kalimantan-barat': 'Kalimantan Barat',
+  'kalimantan-tengah': 'Kalimantan Tengah',
+  'kalimantan-selatan': 'Kalimantan Selatan',
   'kalimantan-timur': 'Kalimantan Timur',
+  'kalimantan-utara': 'Kalimantan Utara',
+  // SULAWESI
   'sulawesi-utara': 'Sulawesi Utara',
+  'gorontalo': 'Gorontalo',
+  'sulawesi-tengah': 'Sulawesi Tengah',
+  'sulawesi-barat': 'Sulawesi Barat',
+  'sulawesi-selatan': 'Sulawesi Selatan',
+  'sulawesi-tenggara': 'Sulawesi Tenggara',
+  // MALUKU & PAPUA
+  'maluku': 'Maluku',
+  'maluku-utara': 'Maluku Utara',
+  'irian-jaya-timur': 'Papua',
+  'irian-jaya-barat': 'Papua Barat',
+  'papua-selatan': 'Papua Selatan',
+  'irian-jaya-tengah': 'Papua Tengah',
+  'papua-pegunungan': 'Papua Pegunungan',
+  'papua-barat-daya': 'Papua Barat Daya',
 };
 
-// Urutan provinsi sesuai dengan progres Map
+// Urutan Progres Map (Dari Aceh sampai Papua Barat Daya)
 const PROVINCE_ORDER = [
-  'bali', 'jawa-tengah', 'sumatera-barat', 'sulawesi-selatan', 'papua', 
-  'dki-jakarta', 'jawa-barat', 'jawa-timur', 'kalimantan-timur', 'sulawesi-utara'
+  'di-aceh', 'sumatera-utara', 'sumatera-barat', 'riau', 'kepulauan-riau', 
+  'jambi', 'sumatera-selatan', 'bangka-belitung', 'bengkulu', 'lampung',
+  'probanten', 'dki-jakarta', 'jawa-barat', 'jawa-tengah', 'daerah-istimewa-yogyakarta', 'jawa-timur',
+  'bali', 'nusa-tenggara-barat', 'nusa-tenggara-timur',
+  'kalimantan-barat', 'kalimantan-tengah', 'kalimantan-selatan', 'kalimantan-timur', 'kalimantan-utara',
+  'sulawesi-utara', 'gorontalo', 'sulawesi-tengah', 'sulawesi-barat', 'sulawesi-selatan', 'sulawesi-tenggara',
+  'maluku', 'maluku-utara', 'irian-jaya-timur', 'irian-jaya-barat', 'papua-selatan', 'irian-jaya-tengah', 'papua-pegunungan', 'papua-barat-daya'
 ];
 
 const STORAGE_KEY_PROVINCE  = 'axara_quest_province';
