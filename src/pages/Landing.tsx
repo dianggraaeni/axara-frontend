@@ -10,6 +10,8 @@ import React, { useState, useRef, useEffect } from "react";
 import FloatingChat from '../components/FloatingChat';
 import { useTranslation } from '../hooks/useTranslation';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+// 1. Tambahkan import useAuth
+import { useAuth } from '../context/AuthContext';
 
 const floatingIcons = [
   { img: '/icons/borobudur.jpg', label: 'Borobudur', delay: 0 },
@@ -45,6 +47,9 @@ const getAvatarProps = (name: string) => {
 export default function LandingPage() {
   const { t, language, setLanguage } = useTranslation();
   const isEn = language === 'en';
+  
+  // 2. Ambil data user dari AuthContext
+  const { user } = useAuth();
 
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -299,16 +304,22 @@ export default function LandingPage() {
                 FAQ
               </a>
               
+              {/* UPDATED: Level & XP Display */}
               <div className="flex items-center gap-4 bg-cream px-4 py-2 rounded-2xl border border-cream-dark">
                 <div className="flex items-center gap-2">
                   <Flame className="text-primary" size={20} />
-                  <span className="font-bold text-text">{isEn ? 'Day 1' : 'Hari 1'}</span>
+                  {/* Ambil Level dari data user, default ke 1 jika belum ada */}
+                  <span className="font-bold text-text">Lv. {user?.level || 1}</span>
                 </div>
                 <div className="w-px h-6 bg-cream-dark"></div>
                 <div className="flex items-center gap-2">
                   <Star className="text-[#ffce00]" size={20} />
                   <div className="w-24 h-3 bg-white rounded-full overflow-hidden border border-cream-dark">
-                    <div className="h-full bg-[#ffce00] w-1/3 rounded-full"></div>
+                    {/* Bar XP dinamis (Target level selanjutnya adalah 500 XP) */}
+                    <div 
+                      className="h-full bg-[#ffce00] transition-all duration-500" 
+                      style={{ width: `${Math.min(((user?.xp || 0) % 500) / 500 * 100, 100)}%` }}
+                    ></div>
                   </div>
                 </div>
               </div>

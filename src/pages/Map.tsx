@@ -1,4 +1,4 @@
-import { React, useState, useMemo, useRef } from 'react';
+import { React, useState, useMemo, useRef, useEffect } from 'react'; // ✨ Tambahkan useEffect
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, ChevronLeft, ChevronRight,
@@ -42,9 +42,16 @@ export default function MapPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { stats } = useUserStats();
+  const { stats, refetch } = useUserStats();
 
-  const userLevel = stats?.level ?? user?.level ?? 1;
+  // ✨ UBAH URUTANNYA: Prioritaskan data lokal (user) daripada backend (stats)
+  // Ini memastikan Map langsung update setelah level-up di QuestPage
+  const userLevel = user?.level ?? stats?.level ?? 1;
+
+  // ✨ TAMBAHKAN INI: Agar data backend sinkron saat masuk ke halaman Map
+  useEffect(() => {
+    if (refetch) refetch();
+  }, [refetch]);
 
   const completedIndices = useMemo(() => {
     const s = new Set<number>();

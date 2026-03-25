@@ -16,7 +16,8 @@ import AksaraScramble from '../components/games/AksaraScramble';
 import BadgeUnlockModal from '../components/BadgeUnlockModal';
 import { useTranslation } from '../hooks/useTranslation';
 import LanguageSwitcher from '../components/LanguageSwitcher';
-import { useSound } from '../hooks/useSound'; // ✨ Tambahkan ini di deretan import atas
+import { useSound } from '../hooks/useSound';
+import { useAuth } from '../context/AuthContext';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface QuizQuestion {
@@ -41,6 +42,12 @@ const PROVINCE_NAMES: Record<string, string> = {
   'kalimantan-timur': 'Kalimantan Timur',
   'sulawesi-utara': 'Sulawesi Utara',
 };
+
+// Urutan provinsi sesuai dengan progres Map
+const PROVINCE_ORDER = [
+  'bali', 'jawa-tengah', 'sumatera-barat', 'sulawesi-selatan', 'papua', 
+  'dki-jakarta', 'jawa-barat', 'jawa-timur', 'kalimantan-timur', 'sulawesi-utara'
+];
 
 const STORAGE_KEY_PROVINCE  = 'axara_quest_province';
 const STORAGE_KEY_COMPLETED = 'axara_quest_completed';
@@ -115,7 +122,6 @@ function GuessCultureGame({
   const [showExplanation, setShowExplanation] = useState(false);
   const scoreRef = useRef(0);
 
-  // ✨ Inisialisasi sound hook
   const { playCorrect, playWrong, playClick } = useSound();
 
   const question = questions[currentIndex];
@@ -129,7 +135,6 @@ function GuessCultureGame({
     setIsCorrect(correct);
     setShowExplanation(true);
 
-    // ✨ Putar suara sesuai jawaban
     if (correct) {
       playCorrect();
       scoreRef.current += 1;
@@ -139,7 +144,7 @@ function GuessCultureGame({
   };
 
   const handleNext = () => {
-    playClick(); // ✨ Suara klik saat lanjut
+    playClick();
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(c => c + 1);
       setSelectedAnswer(null);
@@ -154,7 +159,7 @@ function GuessCultureGame({
     <GameWrapper>
       <header className="shrink-0 px-5 pt-4 pb-3 flex items-center gap-3">
         <button
-          onClick={() => { playClick(); onBack(); }} // ✨ Suara klik saat back
+          onClick={() => { playClick(); onBack(); }}
           className="w-12 h-12 flex items-center justify-center rounded-xl shrink-0"
           style={{ background: 'white', border: '3px solid #1a0f0a', boxShadow: '3px 3px 0 #1a0f0a', transition: 'all 0.1s' }}
           {...makePressHandlers('3px 3px 0 #1a0f0a')}
@@ -352,7 +357,7 @@ function GuessCultureGame({
   );
 }
 
-// ─── GameCard component (selector screen) ─────────────────────────────────────
+// ─── GameCard component ───────────────────────────────────────────────────────
 function GameCard({
   icon, title, description, xpLabel, accentColor,
   badge, isDone, disabled, onClick,
@@ -429,13 +434,14 @@ function GameCard({
 // ─── Main QuestPage ────────────────────────────────────────────────────────────
 export default function QuestPage() {
   const { t } = useTranslation();
+  const { user, setUser } = useAuth(); // ✨ Dapatkan context user
   const [searchParams] = useSearchParams();
   const navigate       = useNavigate();
 
   const urlProvinceId = searchParams.get('province');
   const [provinceId]  = useState<string | null>(() => {
-    if (urlProvinceId) { sessionStorage.setItem(STORAGE_KEY_PROVINCE, urlProvinceId); return urlProvinceId; }
-    return sessionStorage.getItem(STORAGE_KEY_PROVINCE);
+    if (urlProvinceId) { localStorage.setItem(STORAGE_KEY_PROVINCE, urlProvinceId); return urlProvinceId; }
+    return localStorage.getItem(STORAGE_KEY_PROVINCE);
   });
 
   const provinceName = provinceId
@@ -452,10 +458,10 @@ export default function QuestPage() {
 
   const [completedGames, setCompletedGames] = useState<GameId[]>(() => {
     try {
-      const stored = sessionStorage.getItem(STORAGE_KEY_COMPLETED);
+      const stored = localStorage.getItem(STORAGE_KEY_COMPLETED);
       if (stored) {
         const parsed = JSON.parse(stored) as { provinceId: string; games: GameId[] };
-        const cur    = urlProvinceId || sessionStorage.getItem(STORAGE_KEY_PROVINCE);
+        const cur    = urlProvinceId || localStorage.getItem(STORAGE_KEY_PROVINCE);
         if (parsed.provinceId === cur) return parsed.games;
       }
     } catch { /* ignore */ }
@@ -465,7 +471,7 @@ export default function QuestPage() {
   const [showBadge, setShowBadge] = useState(false);
 
   const saveCompletedGames = (games: GameId[]) => {
-    sessionStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify({ provinceId, games }));
+    localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify({ provinceId, games }));
     setCompletedGames(games);
   };
 
@@ -496,10 +502,14 @@ export default function QuestPage() {
     } catch (err) { console.error('Backend silent fail:', err); }
   };
 
+  // REVISI finishGame: Sinkronisasi XP Langsung & Level Up Otomatis
   const finishGame = async (score: number, total: number, xpPerPoint: number, questionsData?: QuizQuestion[]) => {
-    const xp = score * xpPerPoint;
-    setFinalScore(score); setFinalTotal(total); setFinalXp(xp);
+    const xpEarned = score * xpPerPoint; // XP yang baru didapat dari game ini
+    setFinalScore(score); 
+    setFinalTotal(total); 
+    setFinalXp(xpEarned);
 
+    // 1. Kirim ke backend (Database tetap update)
     if (selectedGame && provinceId && questionsData) {
       const map: Record<GameId, string> = {
         guess: 'guess_culture',
@@ -510,20 +520,52 @@ export default function QuestPage() {
       await submitToBackend(map[selectedGame], score, total, questionsData);
     }
 
+    // 2. Update Progress Lokal (XP & Level) secara instan agar Navbar & Map terupdate
     if (provinceId && selectedGame) {
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      
+      // Tambahkan XP baru ke XP lama yang sudah ada di profil
+      const updatedXP = (currentUser.xp || 0) + xpEarned;
+      
+      let updatedLevel = currentUser.level || 1;
+      let newList: GameId[] = [...completedGames];
+
       if (!completedGames.includes(selectedGame)) {
-        const newList: GameId[] = [...completedGames, selectedGame];
+        newList = [...completedGames, selectedGame];
         saveCompletedGames(newList);
+
+        // LOGIKA LEVEL UP: Jika 4 game di provinsi ini selesai semua
         if (newList.length === 4) {
           confetti({ particleCount: 200, spread: 90, colors: ['#F14C38', '#FBBF24', '#fff'] });
           setShowBadge(true);
+
+          const provinceIndex = PROVINCE_ORDER.indexOf(provinceId);
+          // Level naik jika level saat ini kurang dari atau sama dengan urutan provinsi
+          if (updatedLevel <= provinceIndex + 1) {
+            updatedLevel += 1;
+            console.log("Level Up! New Level:", updatedLevel);
+          }
         } else if (score === total) {
           confetti({ particleCount: 100, spread: 70, colors: ['#F14C38', '#FBBF24', '#fff'] });
         }
       } else if (score === total) {
+        // Tetap confetti jika menang sempurna di game yang sudah pernah selesai
         confetti({ particleCount: 100, spread: 70, colors: ['#F14C38', '#FBBF24', '#fff'] });
       }
+
+      // Simpan User yang sudah diperbarui (XP + Level terbaru) ke localStorage
+      const newUser = { 
+        ...currentUser, 
+        level: updatedLevel, 
+        xp: updatedXP 
+      };
+
+      localStorage.setItem('user', JSON.stringify(newUser));
+      
+      // Update global context agar UI di mana-mana berubah tanpa refresh
+      if (setUser) setUser(newUser);
     }
+    
     setIsFinished(true);
   };
 
@@ -791,7 +833,7 @@ export default function QuestPage() {
           <LanguageSwitcher variant="minimal" />
 
           <button
-            onClick={() => { sessionStorage.removeItem(STORAGE_KEY_PROVINCE); sessionStorage.removeItem(STORAGE_KEY_COMPLETED); navigate('/app'); }}
+            onClick={() => { localStorage.removeItem(STORAGE_KEY_PROVINCE); localStorage.removeItem(STORAGE_KEY_COMPLETED); navigate('/app'); }}
             className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl"
             style={{ background: 'white', border: '2.5px solid #1a0f0a', boxShadow: '2px 2px 0 #1a0f0a', transition: 'all 0.1s' }}
             {...makePressHandlers('2px 2px 0 #1a0f0a')}
