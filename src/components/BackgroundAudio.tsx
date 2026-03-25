@@ -3,7 +3,11 @@ import useSound from 'use-sound'
 import { Volume2, VolumeX } from 'lucide-react'
 import { motion } from 'framer-motion'
 
-export default function BackgroundAudio() {
+type Props = {
+  language: 'id' | 'en'
+}
+
+export default function BackgroundAudio({ language }: Props) {
   const [isPlaying, setIsPlaying] = useState(false)
   const [hasInteracted, setHasInteracted] = useState(false)
 
@@ -35,6 +39,15 @@ export default function BackgroundAudio() {
     setIsPlaying(!isPlaying)
   }
 
+  const titleText =
+    language === 'en'
+      ? isPlaying
+        ? 'Pause Music'
+        : 'Play Music'
+      : isPlaying
+      ? 'Jeda Musik'
+      : 'Putar Musik'
+
   return (
     <motion.button
       initial={{ scale: 1.1 }}
@@ -48,7 +61,7 @@ export default function BackgroundAudio() {
           : '0 8px 24px rgba(212,175,55,0.4)',
         transition: 'box-shadow 0.4s ease',
       }}
-      title={isPlaying ? 'Matikan Musik' : 'Nyalakan Musik'}
+      title={titleText}
     >
       {isPlaying ? (
         <>
@@ -63,7 +76,10 @@ export default function BackgroundAudio() {
             animate={{ scale: [1, 1.5, 1.5], opacity: [0.3, 0, 0] }}
             transition={{ repeat: Infinity, duration: 1.8, ease: 'easeOut', delay: 0.6 }}
           />
-          <motion.div animate={{ scale: [1, 1.1, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
+          <motion.div
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+          >
             <Volume2 size={24} className="text-white relative z-10" />
           </motion.div>
         </>
@@ -71,10 +87,12 @@ export default function BackgroundAudio() {
         <VolumeX size={24} className="text-white/70" />
       )}
 
-      <span className="absolute right-20 opacity-0 group-hover:opacity-100 bg-white text-xs font-bold px-3 py-1 rounded-lg shadow-md transition-opacity whitespace-nowrap pointer-events-none"
+      {/* Tooltip */}
+      <span
+        className="absolute right-20 opacity-0 group-hover:opacity-100 bg-white text-xs font-bold px-3 py-1 rounded-lg shadow-md transition-opacity whitespace-nowrap pointer-events-none"
         style={{ color: '#D4AF37' }}
       >
-        {isPlaying ? 'Matikan Musik' : 'Nyalakan Musik'}
+        {titleText}
       </span>
     </motion.button>
   )

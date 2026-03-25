@@ -115,7 +115,7 @@ export default function FloatingChat() {
               </div>
               <div className="flex-1">
                 <h2 className="font-black text-base leading-none text-white uppercase">
-                  Axara <span style={{ color: '#FBBF24' }}>Guide</span>
+                  Axara <span style={{ color: '#FBBF24' }}>Bot</span>
                 </h2>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-green-400" style={{ boxShadow: '0 0 4px #4ade80' }} />
