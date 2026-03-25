@@ -46,7 +46,7 @@ export const newsArticles: NewsArticle[] = [
     date: '2025-03-20T09:00:00Z',
     location: 'Solo, Jawa Tengah',
     tags: ['batik', 'festival', 'UNESCO', 'fashion'],
-    externalLink: 'https://festivalbatik.co.id'
+    externalLink: 'https://surakarta.go.id/detail-berita/solo-batik-carnival-2025-resmi-dibuka-parade-budaya-pikat-ribuan-penonton-2054'
   },
   {
     id: 'news-002',
@@ -67,6 +67,7 @@ export const newsArticles: NewsArticle[] = [
     date: '2025-03-18T00:00:00Z',
     location: 'Probolinggo, Jawa Timur',
     tags: ['ritual', 'Tengger', 'Bromo', 'tradisi'],
+    externalLink: 'https://www.pasuruankab.go.id/isiberita/sambut-yadnya-kasada-2025-warga-tengger-di-wonokitri-gelar-ritual-buka-gerbang-bromo'
   },
   {
     id: 'news-003',
@@ -87,6 +88,7 @@ export const newsArticles: NewsArticle[] = [
     date: '2025-03-15T10:30:00Z',
     location: 'Yogyakarta',
     tags: ['wayang', 'pendidikan', 'pelestarian', 'budaya'],
+    externalLink: 'berita.rri.co.id/yogyakarta/regional/2156475/peringati-tahun-emas-smkn-4-yogyakarta-selenggarakan-wayang-kulit'
   },
   {
     id: 'news-004',
@@ -107,7 +109,7 @@ export const newsArticles: NewsArticle[] = [
     date: '2025-03-12T14:00:00Z',
     location: 'Yogyakarta',
     tags: ['UMKM', 'perak', 'ekspor', 'kerajinan'],
-    externalLink: 'https://instagram.com/perakayu_official'
+    externalLink: 'https://berita.rri.co.id/yogyakarta/regional/1921617/festival-perak-kotagede-asa-membangkitkan-kejayaan-perak-era-mataram'
   },
   {
     id: 'news-005',
@@ -128,26 +130,28 @@ export const newsArticles: NewsArticle[] = [
     date: '2025-03-10T08:00:00Z',
     location: 'Jakarta Pusat',
     tags: ['kuliner', 'festival', 'jajanan', 'tradisional'],
+    externalLink: 'https://penghubung.jatengprov.go.id/festival-jajanan-pasar-khas-jateng-digelar-di-mall-bassura-jakarta/'
   },
   {
     id: 'news-006',
     category: 'pelestarian',
     title: {
-      id: 'Rumah Adat Tongkonan Dipugar dengan Dana Rp 5 Miliar',
-      en: 'Tongkonan Traditional House Renovated with Rp 5 Billion Fund'
+      id: 'Jaranan Sentherewe Tulungagung Resmi Jadi Warisan Budaya Tak Benda',
+      en: 'Jaranan Sentherewe Tulungagung Officially Recognized as Intangible Cultural Heritage'
     },
     excerpt: {
-      id: 'Pemerintah Sulawesi Selatan mengucurkan dana untuk pemugaran 12 rumah adat Tongkonan yang rusak akibat cuaca ekstrem.',
-      en: 'South Sulawesi government disburses funds to renovate 12 Tongkonan traditional houses damaged by extreme weather.'
+      id: 'Kemenbud RI menetapkan Jaranan Sentherewe sebagai warisan budaya tak benda nasional, memperkuat identitas seni tradisional Tulungagung.',
+      en: 'Indonesia\'s Ministry of Culture designates Jaranan Sentherewe as national intangible cultural heritage, strengthening Tulungagung\'s traditional arts identity.'
     },
     content: {
-      id: 'Dinas Kebudayaan Sulsel mengalokasikan Rp 5 miliar untuk pemugaran rumah adat Tongkonan di Kabupaten Tana Toraja. Proyek ini merupakan respons terhadap kerusakan akibat cuaca ekstrem tahun lalu.\n\n12 Tongkonan akan dipugar dengan tetap mempertahankan keaslian struktur dan ornamen ukiran khas Toraja. Pengerjaan melibatkan para tetua adat dan tukang kayu tradisional.\n\n"Tongkonan bukan sekadar bangunan, tetapi identitas dan kebanggaan masyarakat Toraja. Kita wajib melestarikannya," ujar Gubernur Sulsel.\n\nPemugaran ditargetkan selesai dalam 8 bulan. Masyarakat dapat menyaksikan prosesnya dan belajar tentang arsitektur tradisional Toraja.',
-      en: 'South Sulawesi Culture Office allocates Rp 5 billion for the restoration of Tongkonan traditional houses in Tana Toraja Regency. This project is a response to damage caused by extreme weather last year.\n\n12 Tongkonan will be restored while maintaining the authenticity of the structure and typical Toraja carved ornaments. The work involves traditional elders and traditional carpenters.\n\n"Tongkonan is not just a building, but the identity and pride of the Toraja people. We must preserve it," said the Governor of South Sulawesi.\n\nRestoration is targeted to be completed in 8 months. The community can witness the process and learn about traditional Toraja architecture.'
+      id: 'Kementerian Kebudayaan RI resmi menetapkan Jaranan Sentherewe asal Tulungagung, Jawa Timur, sebagai Warisan Budaya Tak Benda Indonesia pada Februari 2026. Seni pertunjukan kuda lumping ini telah lama dikenal dengan gerakan dinamis dan ritual spiritualnya yang kental dengan tradisi lokal.\n\nPenetapan ini diharapkan mendorong pelestarian dan pengembangan seni tradisional di tengah arus modernisasi. Komunitas pelaku seni setempat terlibat aktif dalam dokumentasi dan pertunjukan rutin untuk menjaga keaslian.\n\n"Penetapan ini memperkuat identitas Tulungagung dan semangat pelestarian seni tradisional," ujar perwakilan Kemenbud.\n\nMasyarakat diajak menyaksikan pertunjukan dan belajar proses kreasi Jaranan Sentherewe untuk generasi mendatang.',
+      en: 'Indonesia\'s Ministry of Culture officially designates Jaranan Sentherewe from Tulungagung, East Java, as National Intangible Cultural Heritage in February 2026. This horse trance dance is renowned for its dynamic movements and deep spiritual rituals rooted in local traditions.\n\nThe recognition aims to promote preservation and development of traditional arts amid modernization. Local artist communities actively document and perform regularly to maintain authenticity.\n\n"This strengthens Tulungagung\'s identity and the spirit of traditional arts preservation," stated a Ministry representative.\n\nThe public is invited to witness performances and learn the creative process of Jaranan Sentherewe for future generations.'
     },
-    image: '/news/tongkonan-pugar.jpg',
-    date: '2025-03-08T11:00:00Z',
-    location: 'Tana Toraja, Sulawesi Selatan',
-    tags: ['rumah adat', 'Tongkonan', 'pemugaran', 'Toraja'],
+    image: '/news/jaranan-sentherewe.jpg',
+    date: '2026-02-23T17:45:00Z',
+    location: 'Tulungagung, Jawa Timur',
+    tags: ['warisan budaya', 'Jaranan Sentherewe', 'pelestarian', 'seni tradisional', 'Kemenbud'],
+    externalLink: 'https://radartulungagung.jawapos.com/amp/seni-budaya/2603240019/resmi-jadi-warisan-budaya-tak-benda-indonesia-jaranan-sentherewe-tulungagung-siap-dipromosikan-dan-dilestarikan-lebih-luas'
   },
   {
     id: 'news-007',
@@ -168,27 +172,28 @@ export const newsArticles: NewsArticle[] = [
     date: '2025-03-05T16:00:00Z',
     location: 'Paris, Prancis / Kupang, NTT',
     tags: ['tenun', 'fashion', 'UMKM', 'NTT', 'Paris'],
-    externalLink: 'https://heritagethreads.id'
+    externalLink: 'https://www.liputan6.com/fashion-beauty/read/3357570/tangis-haru-perajin-tenun-ntt-karyanya-tampil-di-paris-fashion-week'
   },
   {
     id: 'news-008',
     category: 'tradisi',
     title: {
-      id: 'Upacara Ngaben di Bali Dihadiri 5000 Umat Hindu',
-      en: 'Ngaben Ceremony in Bali Attended by 5000 Hindus'
+      id: 'Tabuik Pariaman 2025 Digelar Megah Rayakan Asyura',
+      en: 'Tabuik Pariaman 2025 Held Grandly to Celebrate Asyura'
     },
     excerpt: {
-      id: 'Upacara kremasi massal di Gianyar berlangsung khidmat dengan prosesi adat lengkap dan gamelan Bali.',
-      en: 'Mass cremation ceremony in Gianyar held solemnly with complete traditional procession and Balinese gamelan.'
+      id: 'Festival Tabuik di Pariaman, Sumatera Barat memperingati wafatnya Husain cucu Nabi Muhammad dengan prosesi replika makam raksasa.',
+      en: 'Tabuik Festival in Pariaman, West Sumatra commemorates Husain\'s death, grandson of Prophet Muhammad, with giant replica tomb procession.'
     },
     content: {
-      id: 'Upacara Ngaben massal diadakan di Pura Dalem Gianyar dengan mengkremasi 15 jenazah sekaligus. Prosesi dimulai pukul 08.00 WITA dengan persembahyangan di rumah duka masing-masing.\n\nArak-arakan menuju setra (kuburan) diiringi gamelan Bali dan tari-tarian sakral. Bade (tower kremasi) dihias indah dengan ukiran dan kain warna-warni.\n\nUpacara Ngaben adalah ritual penting dalam agama Hindu Bali yang dipercaya membebaskan atma (roh) untuk mencapai kehidupan yang lebih baik.\n\nWisatawan diperbolehkan menyaksikan dari kejauhan dengan berpakaian sopan dan menjaga kekhidmatan acara.',
-      en: 'Mass Ngaben ceremony held at Pura Dalem Gianyar cremating 15 bodies at once. The procession began at 08.00 WITA with prayers at each funeral home.\n\nThe procession to setra (cemetery) was accompanied by Balinese gamelan and sacred dances. Bade (cremation tower) is beautifully decorated with carvings and colorful fabrics.\n\nNgaben ceremony is an important ritual in Balinese Hinduism believed to free the atma (spirit) to achieve a better life.\n\nTourists are allowed to watch from a distance while dressing modestly and maintaining the solemnity of the event.'
+      id: 'Tradisi Tabuik Pariaman ke-315 digelar pada 1-2 Muharram 1447 H atau 2-3 Oktober 2025, memperingati Karbala dengan dua replika makam raksasa (Tabuik Dua dan Satu) setinggi 20 meter. Ribuan warga memadati Pantai Gandoriah mengikuti prosesi arak-arakan dari Masjid Raya Sheikh Burhanuddin.\n\nProsesi diiringi rebana, hadrah, dan tarian Saman, diakhiri penghempasan Tabuik ke laut simbolis melepaskan roh syuhada. Tabuik dihias kain satin, payung bulat, dan aksesori emas mencerminkan budaya Minangkabau-Islam Persia.\n\nTradisi sejak 1831 ini kental nuansa Syiah yang disesuaikan Sunni lokal, ditetapkan Warisan Budaya Tak Benda Nasional 2019. Ribuan wisatawan menyaksikan dengan menjaga kekhidmatan.\n\n"Tabuik jadi pengingat sejarah dan penguat ukhuwah Islamiyah," ujar panitia.',
+      en: 'The 315th Tabuik Pariaman tradition was held on 1-2 Muharram 1447 H or October 2-3, 2025, commemorating Karbala with two 20-meter giant replica tombs (Tabuik Dua and Satu). Thousands crowded Gandoriah Beach following the procession from Sheikh Burhanuddin Grand Mosque.\n\nThe procession featured rebana drums, hadrah, and Saman dance, ending with Tabuik being smashed into the sea symbolizing the release of martyrs\' souls. Tabuik is adorned with satin fabrics, round umbrellas, and gold accessories reflecting Minangkabau-Islamic-Persian culture.\n\nThis tradition since 1831 blends Shia elements adapted to local Sunni practices, designated National Intangible Cultural Heritage in 2019. Thousands of tourists witnessed while maintaining solemnity.\n\n"Tabuik reminds us of history and strengthens Islamic brotherhood," said organizers.'
     },
-    image: '/news/ngaben-bali.jpg',
-    date: '2025-03-03T08:00:00Z',
-    location: 'Gianyar, Bali',
-    tags: ['Ngaben', 'Bali', 'Hindu', 'upacara'],
+    image: '/news/tabuik-pariaman.jpg',
+    date: '2025-10-02T09:00:00Z',
+    location: 'Pariaman, Sumatera Barat',
+    tags: ['Tabuik', 'Pariaman', 'Asyura', 'tradisi Islam', 'Minangkabau'],
+    externalLink: 'https://www.tempo.co/hiburan/hoyak-tabuik-piaman-2025-di-pariaman-ditargetkan-menarik-400-ribu-pengunjung-1854973'
   },
 ];
 
