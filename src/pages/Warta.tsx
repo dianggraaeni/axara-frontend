@@ -94,7 +94,7 @@ export default function WartaPage() {
         </div>
         <div className="flex-1">
           <h1 className="text-lg font-black leading-none text-white uppercase">
-            Warta <span style={{ color: '#FBBF24' }}>Nusantara</span>
+           AXARA <span style={{ color: '#FBBF24' }}>WARTA</span>
           </h1>
           <p className="text-[9px] font-black tracking-widest uppercase leading-none mt-0.5 text-white/60">
             {isIndonesian ? 'Berita Budaya Terkini' : 'Latest Cultural News'}
