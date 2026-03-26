@@ -1,5 +1,5 @@
 // src/pages/Quest.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -14,10 +14,11 @@ import MemoryMatch from '../components/games/MemoryMatch';
 import CultureSwipe from '../components/games/CultureSwipe';
 import AksaraScramble from '../components/games/AksaraScramble';
 import BadgeUnlockModal from '../components/BadgeUnlockModal';
-import { useTranslation } from '../hooks/useTranslation';
+import { useTranslation } from '../hooks/useTranslation'; 
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useSound } from '../hooks/useSound';
 import { useAuth } from '../context/AuthContext';
+import { usersService } from '../services/users.service';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 interface QuizQuestion {
@@ -77,8 +78,8 @@ const PROVINCE_NAMES: Record<string, string> = {
   'papua-barat-daya': 'Papua Barat Daya',
 };
 
-const STORAGE_KEY_PROVINCE  = 'axara_quest_province';
-const STORAGE_KEY_COMPLETED = 'axara_quest_completed';
+const STORAGE_KEY_PROVINCE  = 'axara_quest_province_v2';
+const STORAGE_KEY_COMPLETED = 'axara_quest_completed_v2';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function makePressHandlers(releaseShadow: string) {
@@ -463,14 +464,46 @@ function GameCard({
 export default function QuestPage() {
   const { t } = useTranslation();
 const { user, updateUser } = useAuth();
-  const [searchParams] = useSearchParams();
+const [searchParams] = useSearchParams();
   const navigate       = useNavigate();
 
   const urlProvinceId = searchParams.get('province');
-  const [provinceId]  = useState<string | null>(() => {
-    if (urlProvinceId) { localStorage.setItem(STORAGE_KEY_PROVINCE, urlProvinceId); return urlProvinceId; }
-    return localStorage.getItem(STORAGE_KEY_PROVINCE);
-  });
+  const provinceId = urlProvinceId;
+  const [isCheckingProvince, setIsCheckingProvince] = useState(false);
+  const [isProvinceAllowed, setIsProvinceAllowed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const validateProvinceAccess = async () => {
+      if (!provinceId) {
+        localStorage.removeItem(STORAGE_KEY_PROVINCE);
+        if (!active) return;
+        setIsProvinceAllowed(false);
+        return;
+      }
+
+      localStorage.setItem(STORAGE_KEY_PROVINCE, provinceId);
+      setIsCheckingProvince(true);
+      try {
+        const passport = await usersService.getPassport();
+        const selected = Array.isArray(passport)
+          ? passport.find((p: any) => p?.id === provinceId)
+          : null;
+        if (!active) return;
+        setIsProvinceAllowed(!!selected && (selected.isUnlocked || selected.isCompleted));
+      } catch {
+        if (!active) return;
+        setIsProvinceAllowed(false);
+      } finally {
+        if (active) setIsCheckingProvince(false);
+      }
+    };
+
+    validateProvinceAccess();
+    return () => {
+      active = false;
+    };
+  }, [provinceId]);
 
   const provinceName = provinceId
     ? (PROVINCE_NAMES[provinceId] ?? provinceId.replace(/-/g, ' '))
@@ -484,27 +517,41 @@ const { user, updateUser } = useAuth();
   const [finalTotal, setFinalTotal]     = useState(0);
   const [finalXp, setFinalXp]           = useState(0);
 
-  const [completedGames, setCompletedGames] = useState<GameId[]>(() => {
+ const [completedGames, setCompletedGames] = useState<GameId[]>(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY_COMPLETED);
       if (stored) {
         const parsed = JSON.parse(stored) as { provinceId: string; games: GameId[] };
-        const cur    = urlProvinceId || localStorage.getItem(STORAGE_KEY_PROVINCE);
-        if (parsed.provinceId === cur) return parsed.games;
+        if (provinceId && parsed.provinceId === provinceId) return parsed.games;
       }
     } catch { /* ignore */ }
     return [];
   });
 
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_COMPLETED);
+      if (!stored || !provinceId) {
+        setCompletedGames([]);
+        return;
+      }
+      const parsed = JSON.parse(stored) as { provinceId: string; games: GameId[] };
+      setCompletedGames(parsed.provinceId === provinceId ? parsed.games : []);
+    } catch {
+      setCompletedGames([]);
+    }
+  }, [provinceId]);
+
   const [showBadge, setShowBadge] = useState(false);
 
-  const saveCompletedGames = (games: GameId[]) => {
+const saveCompletedGames = (games: GameId[]) => {
+    if (!provinceId) return;
     localStorage.setItem(STORAGE_KEY_COMPLETED, JSON.stringify({ provinceId, games }));
     setCompletedGames(games);
   };
 
   const startGuessCulture = async () => {
-    if (!provinceId) { alert('Pilih provinsi dahulu!'); return; }
+    if (!provinceId || !isProvinceAllowed) { alert('Pilih provinsi aktif dari AxaraWorld dahulu!'); return; }
     setSelectedGame('guess');
     setLoading(true);
     try {
@@ -749,7 +796,7 @@ if (backendResult?.xp != null && backendResult?.level != null) {
   }
 
   // ── Active Games ─────────────────────────────────────────────────────────
-  if (selectedGame === 'guess' && questions.length > 0) {
+  if (selectedGame === 'guess' && questions.length > 0 && provinceId && isProvinceAllowed) {
     return (
       <GuessCultureGame
         questions={questions}
@@ -758,7 +805,7 @@ if (backendResult?.xp != null && backendResult?.level != null) {
       />
     );
   }
-  if (selectedGame === 'memory' && provinceId) {
+  if (selectedGame === 'memory' && provinceId && isProvinceAllowed) {
     return (
       <MemoryMatch
         provinceId={provinceId}
@@ -773,7 +820,7 @@ if (backendResult?.xp != null && backendResult?.level != null) {
       />
     );
   }
-  if (selectedGame === 'swipe' && provinceId) {
+if (selectedGame === 'swipe' && provinceId && isProvinceAllowed) {
     return (
       <CultureSwipe
         provinceId={provinceId}
@@ -788,7 +835,7 @@ if (backendResult?.xp != null && backendResult?.level != null) {
       />
     );
   }
-  if (selectedGame === 'scramble' && provinceId) {
+if (selectedGame === 'scramble' && provinceId && isProvinceAllowed) {
     return (
       <AksaraScramble
         provinceId={provinceId}
@@ -867,7 +914,7 @@ if (backendResult?.xp != null && backendResult?.level != null) {
 
       <div className="flex flex-col flex-1 px-5 pb-6 gap-5 overflow-y-auto">
 
-        {provinceId ? (
+        {provinceId && isProvinceAllowed ? (
           <motion.div
             initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.05 }}
             className="rounded-[22px] p-5 flex items-center gap-4"
@@ -898,7 +945,7 @@ if (backendResult?.xp != null && backendResult?.level != null) {
               </span>
             </div>
           </motion.div>
-        ) : (
+    ) : (
           <motion.div
             initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
             className="rounded-[18px] p-4 flex items-center gap-3"
@@ -906,12 +953,19 @@ if (backendResult?.xp != null && backendResult?.level != null) {
           >
             <span className="text-2xl">⚠️</span>
             <p className="text-sm font-bold" style={{ color: '#92400e' }}>
-              {t?.quest?.noProvince}. <button onClick={() => navigate('/app')} className="underline font-black">AxaraWorld</button> {t?.quest?.backToMap}
+              {isCheckingProvince
+                ? 'Memvalidasi provinsi aktif...'
+                : 'Pilih provinsi dulu di AxaraWorld untuk membuka AxaraBattle. '}
+              {!isCheckingProvince && (
+                <>
+                  <button onClick={() => navigate('/app')} className="underline font-black">AxaraWorld</button> {t?.quest?.backToMap}
+                </>
+              )}
             </p>
           </motion.div>
         )}
 
-        {provinceId && (
+        {provinceId && isProvinceAllowed && (
           <motion.div
             initial={{ y: 10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}
             className="rounded-[18px] p-5"
@@ -947,9 +1001,9 @@ if (backendResult?.xp != null && backendResult?.level != null) {
               title={t?.games?.guessTheCulture?.title}
               description={t?.games?.guessTheCulture?.description}
               xpLabel={t?.games?.guessTheCulture?.xpLabel}
-              accentColor="#F14C38"
+            accentColor="#F14C38"
               isDone={isGuessDone}
-              disabled={!provinceId}
+              disabled={!provinceId || !isProvinceAllowed}
               onClick={startGuessCulture}
               badge={<BadgePill done={isGuessDone} label={`🟢 ${t?.badges?.live}`} />}
             />
@@ -961,10 +1015,10 @@ if (backendResult?.xp != null && backendResult?.level != null) {
               title={t?.games?.memoryMatch?.title}
               description={t?.games?.memoryMatch?.description}
               xpLabel={t?.games?.memoryMatch?.xpLabel}
-              accentColor="#FBBF24"
+    accentColor="#FBBF24"
               isDone={isMemoryDone}
-              disabled={!provinceId}
-              onClick={() => provinceId && setSelectedGame('memory')}
+              disabled={!provinceId || !isProvinceAllowed}
+              onClick={() => provinceId && isProvinceAllowed && setSelectedGame('memory')}
               badge={<BadgePill done={isMemoryDone} label={`🟢 ${t?.badges?.live}`} />}
             />
           </motion.div>
@@ -975,10 +1029,10 @@ if (backendResult?.xp != null && backendResult?.level != null) {
               title={t?.games?.cultureSwipe?.title}
               description={t?.games?.cultureSwipe?.description}
               xpLabel={t?.games?.cultureSwipe?.xpLabel}
-              accentColor="#8B5CF6"
+          accentColor="#8B5CF6"
               isDone={isSwipeDone}
-              disabled={!provinceId}
-              onClick={() => provinceId && setSelectedGame('swipe')}
+              disabled={!provinceId || !isProvinceAllowed}
+              onClick={() => provinceId && isProvinceAllowed && setSelectedGame('swipe')}
               badge={<BadgePill done={isSwipeDone} label={`🔥 ${t?.badges?.new}`} />}
             />
           </motion.div>
@@ -989,10 +1043,10 @@ if (backendResult?.xp != null && backendResult?.level != null) {
               title={t?.games?.aksaraScramble?.title}
               description={t?.games?.aksaraScramble?.description}
               xpLabel={t?.games?.aksaraScramble?.xpLabel}
-              accentColor="#10B981"
+     accentColor="#10B981"
               isDone={isScrambleDone}
-              disabled={!provinceId}
-              onClick={() => provinceId && setSelectedGame('scramble')}
+              disabled={!provinceId || !isProvinceAllowed}
+              onClick={() => provinceId && isProvinceAllowed && setSelectedGame('scramble')}
               badge={<BadgePill done={isScrambleDone} label={`🔥 ${t?.badges?.new}`} />}
             />
           </motion.div>

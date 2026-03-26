@@ -35,10 +35,22 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-  const xp        = stats?.xp    ?? user?.xp    ?? 0;
+const xp        = stats?.xp    ?? user?.xp    ?? 0;
   const level     = stats?.level ?? user?.level ?? 1;
   const avatarUrl = user?.avatarUrl ?? null;
   const name      = user?.username ?? 'Petualang';
+  const lastSelectedProvince = typeof window !== 'undefined'
+    ? localStorage.getItem('axara_quest_province_v2')
+    : null;
+const navItemsResolved = navItems.map((item) => {
+  if (item.path !== '/app/quest') return item;
+  return {
+    ...item,
+    path: lastSelectedProvince
+      ? `/app/quest?province=${encodeURIComponent(lastSelectedProvince)}`
+      : '/app/quest',
+  };
+});
 
   // XP progress within current level (assumes 100 XP per level; adjust as needed)
   const xpInLevel  = xp % 100;
@@ -81,8 +93,10 @@ export default function Layout({ children }: { children: ReactNode }) {
 
         {/* ── Nav items ── */}
         <nav className="flex-1 px-3 space-y-1.5">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
+         {navItemsResolved.map((item) => {
+           const isActive = item.path.startsWith('/app/quest')
+  ? location.pathname === '/app/quest'
+  : location.pathname === item.path;
             return (
               <Link key={item.path} to={item.path}
                 className="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wide transition-all"
@@ -184,8 +198,10 @@ export default function Layout({ children }: { children: ReactNode }) {
           boxShadow: '0 -4px 16px rgba(241,76,56,0.08)'
         }}>
         <div className="flex justify-around px-2 py-2 pb-safe">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
+{navItemsResolved.map((item) => {
+  const isActive = item.path.startsWith('/app/quest')
+    ? location.pathname === '/app/quest'
+    : location.pathname === item.path;
             return (
               <Link key={item.path} to={item.path}
                 className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl transition-all"

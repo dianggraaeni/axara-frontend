@@ -91,9 +91,19 @@ export default function MapPage() {
         const completed = new Set<string>();
 
         passport.forEach((p: any) => {
-          if (p?.isUnlocked) unlocked.add(p.id);
           if (p?.isCompleted) completed.add(p.id);
         });
+
+           // Enforce contiguous unlock on client side as guardrail for legacy dirty data.
+        let highestContiguousCompleted = -1;
+        for (let i = 0; i < allProvinces.length; i++) {
+          if (!completed.has(allProvinces[i].id)) break;
+          highestContiguousCompleted = i;
+        }
+        const effectiveUnlockedMax = Math.min(highestContiguousCompleted + 1, allProvinces.length - 1);
+        for (let i = 0; i <= effectiveUnlockedMax; i++) {
+          unlocked.add(allProvinces[i].id);
+        }
 
         const current = allProvinces.find((p) => unlocked.has(p.id) && !completed.has(p.id))?.id ?? null;
 
