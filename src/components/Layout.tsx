@@ -1,5 +1,5 @@
 // src/components/Layout.tsx
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import { Link, useLocation, Navigate } from 'react-router-dom';
 import { Map, Swords, MessageCircle, User, Loader2, Zap, Newspaper } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -14,9 +14,9 @@ const navItems = [
   { path: '/app/profile', label: 'AxaraBadge',  shortLabel: 'Badge',  icon: User,          emoji: '🏅' },
 ];
 
-export default function Layout({ children }: { children: ReactNode }) {
+export default function Layout({ children }: { children: ReactNode }) { 
   const location = useLocation();
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading, isAuthenticated, updateUser } = useAuth();
   const { stats } = useUserStats();
 
   if (isLoading) {
@@ -52,9 +52,21 @@ const navItemsResolved = navItems.map((item) => {
   };
 });
 
-  // XP progress within current level (assumes 100 XP per level; adjust as needed)
-  const xpInLevel  = xp % 100;
+const xpInLevel  = xp % 100;
   const xpPercent  = Math.min(xpInLevel, 100);
+
+  useEffect(() => {
+    if (!stats || !user) return;
+    const needSync =
+      (typeof stats.xp === 'number' && stats.xp !== user.xp) ||
+      (typeof stats.level === 'number' && stats.level !== user.level);
+    if (needSync) {
+      updateUser({
+        xp: typeof stats.xp === 'number' ? stats.xp : user.xp,
+        level: typeof stats.level === 'number' ? stats.level : user.level,
+      });
+    }
+  }, [stats, user, updateUser]);
 
   return (
     <div className="flex h-screen overflow-hidden"

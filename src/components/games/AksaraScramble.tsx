@@ -255,12 +255,12 @@ export default function AksaraScramble({ provinceId, onExit, onWin }: AksaraScra
               </button>
             </div>
           </div>
-        ) : (
+   ) : (
           <AnimatePresence>
             <motion.div
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 270, damping: 28 }}
-              className="fixed bottom-0 left-0 right-0 z-50 p-5"
+              className="absolute bottom-0 left-0 right-0 z-50 p-5"
               style={{ background: feedback.isCorrect ? '#d1fae5' : '#fee2e2', borderTop: `4px solid ${feedback.isCorrect ? '#22c55e' : '#ef4444'}`, boxShadow: '0 -8px 28px rgba(0,0,0,0.12)' }}
             >
               <div className="max-w-2xl mx-auto flex flex-col gap-4">
