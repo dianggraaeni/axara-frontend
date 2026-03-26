@@ -9,9 +9,9 @@ import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simp
 import { provinces as allProvinces } from '../services/provinces.data';
 import { useAuth } from '../context/AuthContext';
 import { useUserStats } from '../hooks/useBackendData';
+import { usersService } from '../services/users.service';
 import { useTranslation } from '../hooks/useTranslation';
 import LanguageSwitcher from '../components/LanguageSwitcher';
-
 const geoUrl = "/indonesia-province-simple.json";
 
 const normalizeId = (name: string) =>
@@ -19,15 +19,31 @@ const normalizeId = (name: string) =>
 
 type ProvinceStatus = 'locked' | 'completed' | 'current' | 'unlocked';
 
-function getProvinceStatus(
-  index: number,
-  userLevel: number,
-  completedIndices: Set<number>
-): ProvinceStatus {
+function getProvinceStatusByLevel(index: number, userLevel: number, completedIndices: Set<number>): ProvinceStatus {
   const required = index + 1;
   if (userLevel < required) return 'locked';
   if (completedIndices.has(index)) return 'completed';
   if (index === userLevel - 1) return 'current';
+  return 'unlocked';
+}
+
+function getProvinceStatus(
+  provinceId: string,
+  index: number,
+  hasPassportData: boolean,
+  unlockedProvinceIds: Set<string>,
+  completedProvinceIds: Set<string>,
+  currentProvinceId: string | null,
+  userLevel: number,
+  completedIndices: Set<number>
+): ProvinceStatus {
+  if (!hasPassportData) {
+    return getProvinceStatusByLevel(index, userLevel, completedIndices);
+  }
+
+  if (!unlockedProvinceIds.has(provinceId)) return 'locked';
+  if (completedProvinceIds.has(provinceId)) return 'completed';
+  if (currentProvinceId === provinceId) return 'current';
   return 'unlocked';
 }
 
@@ -53,11 +69,46 @@ export default function MapPage() {
     if (refetch) refetch();
   }, [refetch]);
 
-  const completedIndices = useMemo(() => {
+ const completedIndices = useMemo(() => {
     const s = new Set<number>();
     for (let i = 0; i < userLevel - 1; i++) s.add(i);
     return s;
   }, [userLevel]);
+
+  const [hasPassportData, setHasPassportData] = useState(false);
+  const [unlockedProvinceIds, setUnlockedProvinceIds] = useState<Set<string>>(new Set());
+  const [completedProvinceIds, setCompletedProvinceIds] = useState<Set<string>>(new Set());
+  const [currentProvinceId, setCurrentProvinceId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const loadPassport = async () => {
+      try {
+        const passport = await usersService.getPassport();
+        if (!active || !Array.isArray(passport)) return;
+
+        const unlocked = new Set<string>();
+        const completed = new Set<string>();
+
+        passport.forEach((p: any) => {
+          if (p?.isUnlocked) unlocked.add(p.id);
+          if (p?.isCompleted) completed.add(p.id);
+        });
+
+        const current = allProvinces.find((p) => unlocked.has(p.id) && !completed.has(p.id))?.id ?? null;
+
+        setUnlockedProvinceIds(unlocked);
+        setCompletedProvinceIds(completed);
+        setCurrentProvinceId(current);
+        setHasPassportData(true);
+      } catch {
+        setHasPassportData(false);
+      }
+    };
+
+    loadPassport();
+    return () => { active = false; };
+  }, [user?.id, userLevel]);
 
   const [selectedId, setSelectedId]     = useState<string | null>(null);
   const [position, setPosition]         = useState({ coordinates: [118, -2] as [number, number], zoom: 1.2 });
@@ -70,12 +121,21 @@ export default function MapPage() {
     () => allProvinces.find(p => p.id === selectedId) ?? null,
     [selectedId]
   );
-  const selectedProvIndex = useMemo(
+const selectedProvIndex = useMemo(
     () => allProvinces.findIndex(p => p.id === selectedId),
     [selectedId]
   );
   const selectedStatus: ProvinceStatus | null = selectedProv
-    ? getProvinceStatus(selectedProvIndex, userLevel, completedIndices)
+    ? getProvinceStatus(
+        selectedProv.id,
+        selectedProvIndex,
+        hasPassportData,
+        unlockedProvinceIds,
+        completedProvinceIds,
+        currentProvinceId,
+        userLevel,
+        completedIndices
+      )
     : null;
 
   const handleZoomIn  = () => setPosition(p => ({ ...p, zoom: Math.min(p.zoom * 1.5, 8) }));
@@ -91,10 +151,19 @@ export default function MapPage() {
     });
   };
 
-  const handleProvinceClick = (id: string) => {
+ const handleProvinceClick = (id: string) => {
     const idx = allProvinces.findIndex(p => p.id === id);
     if (idx === -1) return;
-    const status = getProvinceStatus(idx, userLevel, completedIndices);
+    const status = getProvinceStatus(
+      id,
+      idx,
+      hasPassportData,
+      unlockedProvinceIds,
+      completedProvinceIds,
+      currentProvinceId,
+      userLevel,
+      completedIndices
+    );
     if (status === 'locked') {
       setLockedBounce(id);
       setTimeout(() => setLockedBounce(null), 600);
@@ -215,10 +284,19 @@ export default function MapPage() {
                 geographies.map((geo) => {
                   const rawName = geo.properties?.Propinsi || geo.properties?.NAME_1 || geo.properties?.name;
                   const id = normalizeId(rawName);
-                  const idx = allProvinces.findIndex(p => p.id === id);
+    const idx = allProvinces.findIndex(p => p.id === id);
                   const isExist = idx !== -1;
                   const status: ProvinceStatus = isExist
-                    ? getProvinceStatus(idx, userLevel, completedIndices)
+                    ? getProvinceStatus(
+                        id,
+                        idx,
+                        hasPassportData,
+                        unlockedProvinceIds,
+                        completedProvinceIds,
+                        currentProvinceId,
+                        userLevel,
+                        completedIndices
+                      )
                     : 'locked';
                   const isSelected = selectedId === id;
 
@@ -270,8 +348,17 @@ export default function MapPage() {
           <div ref={scrollRef}
             className="flex gap-3 overflow-x-auto py-1.5"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', scrollBehavior: 'smooth' }}>
-            {allProvinces.map((prov, index) => {
-              const status     = getProvinceStatus(index, userLevel, completedIndices);
+ {allProvinces.map((prov, index) => {
+              const status     = getProvinceStatus(
+                prov.id,
+                index,
+                hasPassportData,
+                unlockedProvinceIds,
+                completedProvinceIds,
+                currentProvinceId,
+                userLevel,
+                completedIndices
+              );
               const isActive   = selectedId === prov.id;
               const isLocked   = status === 'locked';
               const isCurrent  = status === 'current';

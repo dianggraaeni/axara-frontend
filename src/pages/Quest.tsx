@@ -77,17 +77,6 @@ const PROVINCE_NAMES: Record<string, string> = {
   'papua-barat-daya': 'Papua Barat Daya',
 };
 
-// Urutan Progres Map (Dari Aceh sampai Papua Barat Daya)
-const PROVINCE_ORDER = [
-  'di-aceh', 'sumatera-utara', 'sumatera-barat', 'riau', 'kepulauan-riau', 
-  'jambi', 'sumatera-selatan', 'bangka-belitung', 'bengkulu', 'lampung',
-  'probanten', 'dki-jakarta', 'jawa-barat', 'jawa-tengah', 'daerah-istimewa-yogyakarta', 'jawa-timur',
-  'bali', 'nusa-tenggara-barat', 'nusa-tenggara-timur',
-  'kalimantan-barat', 'kalimantan-tengah', 'kalimantan-selatan', 'kalimantan-timur', 'kalimantan-utara',
-  'sulawesi-utara', 'gorontalo', 'sulawesi-tengah', 'sulawesi-barat', 'sulawesi-selatan', 'sulawesi-tenggara',
-  'maluku', 'maluku-utara', 'irian-jaya-timur', 'irian-jaya-barat', 'papua-selatan', 'irian-jaya-tengah', 'papua-pegunungan', 'papua-barat-daya'
-];
-
 const STORAGE_KEY_PROVINCE  = 'axara_quest_province';
 const STORAGE_KEY_COMPLETED = 'axara_quest_completed';
 
@@ -473,7 +462,7 @@ function GameCard({
 // ─── Main QuestPage ────────────────────────────────────────────────────────────
 export default function QuestPage() {
   const { t } = useTranslation();
-  const { user, setUser } = useAuth(); // ✨ Dapatkan context user
+const { user, updateUser } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate       = useNavigate();
 
@@ -529,26 +518,35 @@ export default function QuestPage() {
     }
   };
 
+  // ── Single declaration of submitToBackend ─────────────────────────────────
   const submitToBackend = async (
     gameType: string,
-    score: number, total: number, questionsData: QuizQuestion[]
-  ) => {
-    if (!provinceId) return;
+    score: number,
+    total: number,
+    questionsData: QuizQuestion[]
+  ): Promise<{ xp: number; level: number } | null> => {
+    if (!provinceId) return null;
     try {
       const { sessionId } = await questsService.createSession(provinceId, gameType as any, questionsData);
       const answers = Array(total).fill(0).map((_, i) => (i < score ? 0 : -1));
-      await questsService.submitSession(sessionId, answers);
-    } catch (err) { console.error('Backend silent fail:', err); }
+      const result = await questsService.submitSession(sessionId, answers);
+      // Return xp/level if backend provides them, otherwise null
+      if (result && typeof (result as any).xp === 'number' && typeof (result as any).level === 'number') {
+        return { xp: (result as any).xp, level: (result as any).level };
+      }
+      return null;
+    } catch (err) {
+      console.error('Backend silent fail:', err);
+      return null;
+    }
   };
 
-  // REVISI finishGame: Sinkronisasi XP Langsung & Level Up Otomatis
   const finishGame = async (score: number, total: number, xpPerPoint: number, questionsData?: QuizQuestion[]) => {
-    const xpEarned = score * xpPerPoint; // XP yang baru didapat dari game ini
-    setFinalScore(score); 
-    setFinalTotal(total); 
+    const xpEarned = score * xpPerPoint;
+    setFinalScore(score);
+    setFinalTotal(total);
     setFinalXp(xpEarned);
 
-    // 1. Kirim ke backend (Database tetap update)
     if (selectedGame && provinceId && questionsData) {
       const map: Record<GameId, string> = {
         guess: 'guess_culture',
@@ -556,55 +554,37 @@ export default function QuestPage() {
         swipe: 'province_puzzle',
         scramble: 'aksara_scramble',
       };
-      await submitToBackend(map[selectedGame], score, total, questionsData);
+      try {
+const backendResult = await submitToBackend(map[selectedGame], score, total, questionsData);
+if (backendResult?.xp != null && backendResult?.level != null) {
+  localStorage.setItem('axara_user', JSON.stringify({ ...(user ?? {}), xp: backendResult.xp, level: backendResult.level }));
+  updateUser({ xp: backendResult.xp, level: backendResult.level });
+}
+      } catch (err) {
+        console.error('Gagal menyimpan progress ke backend:', err);
+        alert('Progress gagal disimpan ke server. Coba lagi agar XP dan level tidak hilang.');
+        return;
+      }
     }
 
-    // 2. Update Progress Lokal (XP & Level) secara instan agar Navbar & Map terupdate
     if (provinceId && selectedGame) {
-      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-      
-      // Tambahkan XP baru ke XP lama yang sudah ada di profil
-      const updatedXP = (currentUser.xp || 0) + xpEarned;
-      
-      let updatedLevel = currentUser.level || 1;
       let newList: GameId[] = [...completedGames];
 
       if (!completedGames.includes(selectedGame)) {
         newList = [...completedGames, selectedGame];
         saveCompletedGames(newList);
 
-        // LOGIKA LEVEL UP: Jika 4 game di provinsi ini selesai semua
         if (newList.length === 4) {
           confetti({ particleCount: 200, spread: 90, colors: ['#F14C38', '#FBBF24', '#fff'] });
           setShowBadge(true);
-
-          const provinceIndex = PROVINCE_ORDER.indexOf(provinceId);
-          // Level naik jika level saat ini kurang dari atau sama dengan urutan provinsi
-          if (updatedLevel <= provinceIndex + 1) {
-            updatedLevel += 1;
-            console.log("Level Up! New Level:", updatedLevel);
-          }
         } else if (score === total) {
           confetti({ particleCount: 100, spread: 70, colors: ['#F14C38', '#FBBF24', '#fff'] });
         }
       } else if (score === total) {
-        // Tetap confetti jika menang sempurna di game yang sudah pernah selesai
         confetti({ particleCount: 100, spread: 70, colors: ['#F14C38', '#FBBF24', '#fff'] });
       }
-
-      // Simpan User yang sudah diperbarui (XP + Level terbaru) ke localStorage
-      const newUser = { 
-        ...currentUser, 
-        level: updatedLevel, 
-        xp: updatedXP 
-      };
-
-      localStorage.setItem('user', JSON.stringify(newUser));
-      
-      // Update global context agar UI di mana-mana berubah tanpa refresh
-      if (setUser) setUser(newUser);
     }
-    
+
     setIsFinished(true);
   };
 

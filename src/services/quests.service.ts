@@ -11,7 +11,7 @@ export interface QuizQuestion {
   category?: string;
 }
 
-export type GameType = 'guess_culture' | 'memory_match' | 'province_puzzle';
+export type GameType = 'guess_culture' | 'memory_match' | 'province_puzzle' | 'aksara_scramble';
 export type Difficulty = 'easy' | 'medium' | 'hard';
 
 export const questsService = {
@@ -27,10 +27,23 @@ export const questsService = {
     return data.data as { sessionId: string };
   },
 
-  async submitSession(sessionId: string, answers: number[], durationSeconds?: number) {
+async submitSession(
+    sessionId: string,
+    answers: number[],
+    durationSeconds?: number,
+    extra?: {
+      matchedPairs?: number;
+      totalPairs?: number;
+      placedCount?: number;
+      totalPlaces?: number;
+      solvedWords?: number;
+      totalWords?: number;
+    }
+  ) {
     const { data } = await api.post(`/quests/sessions/${sessionId}/submit`, {
       answers,
       durationSeconds,
+      ...extra,
     });
     return data.data;
   },

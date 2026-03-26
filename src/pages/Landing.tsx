@@ -61,7 +61,7 @@ export default function LandingPage() {
   // ✨ Active section state untuk highlight navbar
   const [activeSection, setActiveSection] = useState<string>('');
 
-  const isLoggedIn = !!localStorage.getItem('user') || !!localStorage.getItem('token');
+  const isLoggedIn = !!user || !!localStorage.getItem('axara_refresh') || !!localStorage.getItem('axara_user');
 
   // ✨ IntersectionObserver: deteksi section mana yang sedang terlihat
   useEffect(() => {

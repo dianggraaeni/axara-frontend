@@ -118,9 +118,48 @@ export const generateStory = async (
 };
 
 // ─── Memory Match Generator ───────────────────────────────────────────────────
-export interface MemoryPair {
+export interface MemoryPair { 
   term: string;
   hint: string;
+}
+
+const GENERIC_MEMORY_WORDS = [
+  'kuliner',
+  'makanan khas',
+  'tarian khas',
+  'seni tari tradisional',
+  'adat',
+  'tradisi',
+  'budaya',
+  'pusaka',
+];
+
+const MEMORY_FALLBACK_BY_PROVINCE: Record<string, MemoryPair[]> = {
+  'kepulauan-riau': [
+    { term: 'Makanan Khas', hint: 'Gonggong' },
+    { term: 'Tarian Khas', hint: 'Zapin Penyengat' },
+    { term: 'Pakaian Adat', hint: 'Teluk Belanga' },
+    { term: 'Sastra Daerah', hint: 'Gurindam Dua Belas' },
+  ],
+  'riau': [
+    { term: 'Makanan Khas', hint: 'Gulai Ikan Patin' },
+    { term: 'Tarian Khas', hint: 'Zapin Melayu Riau' },
+    { term: 'Rumah Adat', hint: 'Selaso Jatuh Kembar' },
+    { term: 'Ikon Budaya', hint: 'Lancang Kuning' },
+  ],
+};
+
+function isGenericMemoryText(text: string): boolean {
+  const lower = text.toLowerCase().trim();
+  return GENERIC_MEMORY_WORDS.some((w) => lower === w || lower.includes(` ${w}`) || lower.startsWith(w));
+}
+
+function isValidMemoryPair(pair: MemoryPair): boolean {
+  if (!pair?.term || !pair?.hint) return false;
+  if (pair.term.trim().length < 4 || pair.hint.trim().length < 3) return false;
+  if (isGenericMemoryText(pair.hint)) return false;
+  if (pair.term.toLowerCase() === pair.hint.toLowerCase()) return false;
+  return true;
 }
 
 export const generateMemoryMatchData = async (provinceName: string): Promise<MemoryPair[]> => {
@@ -133,27 +172,41 @@ export const generateMemoryMatchData = async (provinceName: string): Promise<Mem
       history:[],
     });
 
-    const prompt = `Berikan 4 pasang budaya asli yang SANGAT SPESIFIK (bukan nama generik) dari provinsi ${provinceName}. 
-Gunakan nama asli daerah tersebut (Contoh: "Tari Pendet", "Ayam Betutu", "Pura Besakih").
-ATURAN KERAS: Isi "hint" MAKSIMAL 5 KATA.
-Balas WAJIB dalam format JSON array murni. Format:[
-  {"term": "Nama Budaya Asli", "hint": "Deskripsi singkat"}
-]`;
+    const prompt = `Buat tepat 4 pasangan memory game untuk provinsi ${provinceName}.
+ATURAN KERAS:
+1) "term" harus kategori tetap: "Makanan Khas", "Tarian Khas", "Pakaian Adat", "Ikon Budaya".
+2) "hint" harus contoh SPESIFIK dari provinsi tersebut (contoh: "Gulai Ikan Patin", "Tari Zapin").
+3) DILARANG jawaban generik/sinonim seperti: "kuliner", "makanan khas", "adat", "budaya", "tradisi", "tarian khas".
+4) hint maksimal 4 kata.
+Balas HANYA JSON array murni format:
+[{"term":"Makanan Khas","hint":"Gulai Ikan Patin"}]`;
 
     const response = await chat.sendMessage({ message: prompt });
     let text = response.text ?? '';
-    
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-    
-    return JSON.parse(text) as MemoryPair[];
+
+    const parsed = JSON.parse(text) as MemoryPair[];
+    const normalized = Array.isArray(parsed) ? parsed.slice(0, 4).map((p) => ({
+      term: String(p?.term ?? '').trim(),
+      hint: String(p?.hint ?? '').trim(),
+    })) : [];
+
+    if (normalized.length !== 4 || normalized.some((p) => !isValidMemoryPair(p))) {
+      throw new Error('Memory pairs generic/invalid');
+    }
+
+    return normalized;
   } catch (error) {
     console.error('Memory match data error (AI Limit/Error):', error);
-    const name = provinceName || 'Nusantara';
-    return[
-      { term: `Tarian Khas ${name}`, hint: `Seni tari tradisional dari ${name}` },
-      { term: `Kuliner ${name}`, hint: `Makanan khas dari ${name}` },
-      { term: `Pusaka ${name}`, hint: `Senjata tradisional dari ${name}` },
-      { term: `Adat ${name}`, hint: `Tradisi asli dari ${name}` }
+    const key = (provinceName || '').toLowerCase().trim().replace(/\s+/g, '-');
+    const specificFallback = MEMORY_FALLBACK_BY_PROVINCE[key];
+    if (specificFallback) return specificFallback;
+
+    return [
+      { term: 'Makanan Khas', hint: 'Masakan Daerah Setempat' },
+      { term: 'Tarian Khas', hint: 'Tari Tradisional Setempat' },
+      { term: 'Pakaian Adat', hint: 'Busana Adat Setempat' },
+      { term: 'Ikon Budaya', hint: 'Warisan Budaya Setempat' },
     ];
   }
 };

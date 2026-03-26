@@ -30,9 +30,12 @@ export default function MemoryMatch({ provinceId, onExit, onWin }: MemoryMatchPr
   // ✨ SOUND EFFECTS
   const { playCorrect, playWrong, playClick } = useSound();
 
-  const formattedProvinceName = provinceId
+const formattedProvinceName = provinceId
     ? provinceId.replace(/-/g, ' ').toUpperCase()
     : 'PROVINSI';
+  const aiProvinceName = provinceId
+    ? provinceId.replace(/-/g, ' ')
+    : 'Indonesia';
 
   const initGame = async () => {
     setLoading(true);
@@ -40,7 +43,7 @@ export default function MemoryMatch({ provinceId, onExit, onWin }: MemoryMatchPr
     setMatched([]);
     setMoves(0);
     try {
-      const data = await generateMemoryMatchData(provinceId || 'Indonesia');
+      const data = await generateMemoryMatchData(aiProvinceName);
       setTotalPairs(data.length);
 
       let deck: Card[] = [];
