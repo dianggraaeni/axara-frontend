@@ -1,10 +1,4 @@
 // src/context/AuthContext.tsx
-// FIX Bug 4: Session persist saat refresh browser.
-// Perubahan dari kode asli:
-// - useState diinisialisasi langsung dari authService.getCachedUser() (sudah ada di auth.service.ts)
-// - restoreSession() tetap berjalan di background untuk refresh access token
-// - Timeout 5 detik: jika backend tidak merespons, tetap pakai cached user (tidak paksa logout)
-// - Hanya logout jika refresh token benar-benar invalid (restoreSession() throw error)
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { authService, AuthUser } from '../services/auth.service';
@@ -13,38 +7,34 @@ interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  lastUpdated: number;
+  lastBadgeUpdated: number;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, username: string, password: string, gender?: 'male' | 'female') => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (partial: Partial<AuthUser>) => void;
+  triggerBadgeRefetch: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // FIX: Inisialisasi langsung dari localStorage via getCachedUser()
-  // sehingga user tidak null saat halaman pertama kali dimuat
   const [user, setUser] = useState<AuthUser | null>(() => authService.getCachedUser());
-  
-  // FIX: isLoading hanya true jika ada refresh token yang perlu divalidasi
-  // Jika tidak ada token sama sekali, langsung false tanpa hit API
   const [isLoading, setIsLoading] = useState<boolean>(() => {
     return !!localStorage.getItem('axara_refresh');
   });
+  const [lastUpdated, setLastUpdated] = useState<number>(() => Date.now());
+  const [lastBadgeUpdated, setLastBadgeUpdated] = useState<number>(() => Date.now());
 
   useEffect(() => {
-    // Tidak ada refresh token → tidak perlu hit API sama sekali
     const hasRefreshToken = !!localStorage.getItem('axara_refresh');
     if (!hasRefreshToken) {
       setIsLoading(false);
       return;
     }
 
-    // FIX: Timeout 5 detik — jika backend tidak merespons,
-    // tetap pakai cached user (tidak paksa logout)
     const timeout = setTimeout(() => {
       console.warn('Session restore timeout — menggunakan cached user');
-      // Tidak hapus localStorage, tidak logout — pakai cached user
       setIsLoading(false);
     }, 5000);
 
@@ -52,11 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((u) => {
         clearTimeout(timeout);
         if (u) setUser(u);
-        // Jika u null tapi tidak throw, berarti tidak ada sesi — tetap pakai cached
       })
       .catch(() => {
         clearTimeout(timeout);
-        // restoreSession throw = refresh token invalid → logout paksa
         setUser(null);
       })
       .finally(() => {
@@ -82,6 +70,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateUser = (partial: Partial<AuthUser>) => {
     setUser((prev) => prev ? { ...prev, ...partial } : null);
+    setLastUpdated(Date.now());
+  };
+
+  const triggerBadgeRefetch = () => {
+    setLastBadgeUpdated(Date.now());
   };
 
   return (
@@ -89,10 +82,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isLoading,
       isAuthenticated: !!user,
+      lastUpdated,
+      lastBadgeUpdated,
       login,
       register,
       logout,
       updateUser,
+      triggerBadgeRefetch,
     }}>
       {children}
     </AuthContext.Provider>

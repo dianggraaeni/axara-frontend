@@ -463,7 +463,7 @@ function GameCard({
 // ─── Main QuestPage ────────────────────────────────────────────────────────────
 export default function QuestPage() {
   const { t } = useTranslation();
-const { user, updateUser } = useAuth();
+const { user, updateUser, triggerBadgeRefetch } = useAuth();
 const [searchParams] = useSearchParams();
   const navigate       = useNavigate();
 
@@ -542,6 +542,10 @@ const [searchParams] = useSearchParams();
     }
   }, [provinceId]);
 
+  const [backendError, setBackendError] = useState(false);
+  const [xpSyncing, setXpSyncing] = useState(false);
+  const submitQueueRef = useRef<Promise<void>>(Promise.resolve());
+
   const [showBadge, setShowBadge] = useState(false);
 
 const saveCompletedGames = (games: GameId[]) => {
@@ -588,50 +592,84 @@ const saveCompletedGames = (games: GameId[]) => {
     }
   };
 
-  const finishGame = async (score: number, total: number, xpPerPoint: number, questionsData?: QuizQuestion[]) => {
+  const finishGame = async (
+    score: number,
+    total: number,
+    xpPerPoint: number,
+    questionsData?: QuizQuestion[]
+  ) => {
+    // ── Kalkulasi lokal dulu, sebelum apapun ──
     const xpEarned = score * xpPerPoint;
     setFinalScore(score);
     setFinalTotal(total);
     setFinalXp(xpEarned);
 
-    if (selectedGame && provinceId && questionsData) {
+    // ── Tandai game selesai secara lokal ──
+    let newList: GameId[] = [...completedGames];
+    let isNewCompletion = false;
+
+    if (provinceId && selectedGame && !completedGames.includes(selectedGame)) {
+      newList = [...completedGames, selectedGame];
+      saveCompletedGames(newList);
+      isNewCompletion = true;
+    }
+
+    // ── Confetti & Badge ──
+    if (isNewCompletion && newList.length === 4) {
+      confetti({ particleCount: 200, spread: 90, colors: ['#F14C38', '#FBBF24', '#fff'] });
+      setShowBadge(true);
+      // Backend sudah auto-award badge via submitSession → province_complete event
+      // Cukup trigger refetch setelah submit backend selesai, tidak perlu endpoint terpisah
+      triggerBadgeRefetch();
+    } else if (score === total) {
+      confetti({ particleCount: 100, spread: 70, colors: ['#F14C38', '#FBBF24', '#fff'] });
+    }
+
+    // ── Submit ke backend dengan antrian ──
+    if (provinceId && selectedGame && questionsData) {
       const map: Record<GameId, string> = {
         guess: 'guess_culture',
         memory: 'memory_match',
         swipe: 'province_puzzle',
         scramble: 'aksara_scramble',
       };
-      try {
-const backendResult = await submitToBackend(map[selectedGame], score, total, questionsData);
-if (backendResult?.xp != null && backendResult?.level != null) {
-  localStorage.setItem('axara_user', JSON.stringify({ ...(user ?? {}), xp: backendResult.xp, level: backendResult.level }));
-  updateUser({ xp: backendResult.xp, level: backendResult.level });
-}
-      } catch (err) {
-        console.error('Gagal menyimpan progress ke backend:', err);
-        alert('Progress gagal disimpan ke server. Coba lagi agar XP dan level tidak hilang.');
-        return;
-      }
+
+      const gameType = map[selectedGame];
+      const capturedQuestions = [...questionsData];
+      const capturedScore = score;
+      const capturedTotal = total;
+      const capturedIsNewCompletion = isNewCompletion;
+      const capturedNewListLength = newList.length;
+
+      setXpSyncing(true);
+
+      submitQueueRef.current = submitQueueRef.current
+        .then(() =>
+          submitToBackend(gameType, capturedScore, capturedTotal, capturedQuestions)
+        )
+        .then((backendResult) => {
+          if (backendResult?.xp != null && backendResult?.level != null) {
+            const cached = JSON.parse(localStorage.getItem('axara_user') || '{}');
+            const merged = { ...cached, xp: backendResult.xp, level: backendResult.level };
+            localStorage.setItem('axara_user', JSON.stringify(merged));
+            updateUser({ xp: backendResult.xp, level: backendResult.level });
+          }
+
+          if (capturedIsNewCompletion && capturedNewListLength === 4) {
+            triggerBadgeRefetch();
+          }
+        })
+        .catch((err) => {
+          console.error('Backend submit failed:', err);
+          setBackendError(true);
+          setTimeout(() => setBackendError(false), 5000);
+        })
+        .finally(() => {
+          setXpSyncing(false);
+        });
     }
 
-    if (provinceId && selectedGame) {
-      let newList: GameId[] = [...completedGames];
-
-      if (!completedGames.includes(selectedGame)) {
-        newList = [...completedGames, selectedGame];
-        saveCompletedGames(newList);
-
-        if (newList.length === 4) {
-          confetti({ particleCount: 200, spread: 90, colors: ['#F14C38', '#FBBF24', '#fff'] });
-          setShowBadge(true);
-        } else if (score === total) {
-          confetti({ particleCount: 100, spread: 70, colors: ['#F14C38', '#FBBF24', '#fff'] });
-        }
-      } else if (score === total) {
-        confetti({ particleCount: 100, spread: 70, colors: ['#F14C38', '#FBBF24', '#fff'] });
-      }
-    }
-
+    // ── setIsFinished paling bawah ──
     setIsFinished(true);
   };
 
@@ -744,9 +782,34 @@ if (backendResult?.xp != null && backendResult?.level != null) {
                   +{finalXp}
                 </motion.p>
                 <XPBar value={finalXp} max={finalTotal * 50} color="#F14C38" />
-                <p className="text-[11px] font-black uppercase tracking-widest" style={{ color: 'rgba(26,15,10,0.35)' }}>
-                  XP sudah tersimpan ke profil ✓
-                </p>
+                {xpSyncing ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <Loader2
+                      size={13}
+                      strokeWidth={3}
+                      className="animate-spin"
+                      style={{ color: 'rgba(26,15,10,0.4)' }}
+                    />
+                    <span
+                      className="text-[10px] font-black uppercase tracking-widest"
+                      style={{ color: 'rgba(26,15,10,0.4)' }}
+                    >
+                      Menyinkronkan XP...
+                    </span>
+                  </motion.div>
+                ) : (
+                  <p
+                    className="text-[11px] font-black uppercase tracking-widest"
+                    style={{ color: 'rgba(26,15,10,0.35)' }}
+                  >
+                    XP sudah tersimpan ke profil ✓
+                  </p>
+                )}
+
               </div>
             </div>
 
@@ -790,6 +853,34 @@ if (backendResult?.xp != null && backendResult?.level != null) {
               </button>
             </div>
           </motion.div>
+
+          {/* Toast error backend */}
+          <AnimatePresence>
+            {backendError && (
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 40 }}
+                className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 px-5 py-3.5 rounded-2xl"
+                style={{
+                  background: '#1a0f0a',
+                  border: '3px solid #FBBF24',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <div
+                  className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
+                  style={{ background: '#FBBF24' }}
+                >
+                  <span style={{ fontSize: '12px', fontWeight: 900, color: '#1a0f0a' }}>!</span>
+                </div>
+                <p className="text-sm font-black text-white">
+                  Koneksi bermasalah — XP lokal tersimpan, skor server belum sinkron.
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </GameWrapper>
       </>
     );

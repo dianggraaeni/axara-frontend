@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { provincesService } from '../services/provinces.service';
 import { usersService } from '../services/users.service';
 import { leaderboardService } from '../services/leaderboard.service';
+import { useAuth } from '../context/AuthContext';
 
 // ─── useProvinces ─────────────────────────────────────────────────────────────
 export function useProvinces() {
@@ -33,6 +34,7 @@ export function useProvinces() {
 export function useUserStats() {
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { lastUpdated } = useAuth();
 
   const fetch = useCallback(async () => {
     try {
@@ -44,7 +46,7 @@ export function useUserStats() {
     }
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetch(); }, [fetch, lastUpdated]);
 
   return { stats, isLoading, refetch: fetch };
 }
@@ -53,6 +55,7 @@ export function useUserStats() {
 export function useUserBadges() {
   const [badges, setBadges] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { lastBadgeUpdated } = useAuth();
 
   const fetch = useCallback(async () => {
     try {
@@ -64,7 +67,7 @@ export function useUserBadges() {
     }
   }, []);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  useEffect(() => { fetch(); }, [fetch, lastBadgeUpdated]);
 
   return { badges, isLoading, refetch: fetch };
 }
