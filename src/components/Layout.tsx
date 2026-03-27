@@ -14,11 +14,30 @@ const navItems = [
   { path: '/app/profile', label: 'AxaraBadge',  shortLabel: 'Badge',  icon: User,          emoji: '🏅' },
 ];
 
-export default function Layout({ children }: { children: ReactNode }) { 
+export default function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const { user, isLoading, isAuthenticated, updateUser } = useAuth();
-  const { stats } = useUserStats();
+  const { stats, refetch } = useUserStats();
 
+  // ── SEMUA HOOKS HARUS DI ATAS, SEBELUM CONDITIONAL RETURN ──
+  useEffect(() => {
+    if (refetch) refetch();
+  }, [refetch]);
+
+  useEffect(() => {
+    if (!stats || !user) return;
+    const needSync =
+      (typeof stats.xp === 'number' && stats.xp !== user.xp) ||
+      (typeof stats.level === 'number' && stats.level !== user.level);
+    if (needSync) {
+      updateUser({
+        xp: typeof stats.xp === 'number' ? stats.xp : user.xp,
+        level: typeof stats.level === 'number' ? stats.level : user.level,
+      });
+    }
+  }, [stats, user, updateUser]);
+
+  // ── CONDITIONAL RETURN SETELAH SEMUA HOOKS ──
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center flex-col gap-4"
@@ -35,46 +54,33 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
-const xp        = stats?.xp    ?? user?.xp    ?? 0;
+  const xp        = stats?.xp    ?? user?.xp    ?? 0;
   const level     = stats?.level ?? user?.level ?? 1;
   const avatarUrl = user?.avatarUrl ?? null;
   const name      = user?.username ?? 'Petualang';
+
   const lastSelectedProvince = typeof window !== 'undefined'
     ? localStorage.getItem('axara_quest_province_v2')
     : null;
-const navItemsResolved = navItems.map((item) => {
-  if (item.path !== '/app/quest') return item;
-  return {
-    ...item,
-    path: lastSelectedProvince
-      ? `/app/quest?province=${encodeURIComponent(lastSelectedProvince)}`
-      : '/app/quest',
-  };
-});
 
-const xpInLevel  = xp % 100;
-  const xpPercent  = Math.min(xpInLevel, 100);
+  const navItemsResolved = navItems.map((item) => {
+    if (item.path !== '/app/quest') return item;
+    return {
+      ...item,
+      path: lastSelectedProvince
+        ? `/app/quest?province=${encodeURIComponent(lastSelectedProvince)}`
+        : '/app/quest',
+    };
+  });
 
-  useEffect(() => {
-    if (!stats || !user) return;
-    const needSync =
-      (typeof stats.xp === 'number' && stats.xp !== user.xp) ||
-      (typeof stats.level === 'number' && stats.level !== user.level);
-    if (needSync) {
-      updateUser({
-        xp: typeof stats.xp === 'number' ? stats.xp : user.xp,
-        level: typeof stats.level === 'number' ? stats.level : user.level,
-      });
-    }
-  }, [stats, user, updateUser]);
+  const xpInLevel = xp % 100;
+  const xpPercent = Math.min(xpInLevel, 100);
 
   return (
     <div className="flex h-screen overflow-hidden"
       style={{ background: '#F4F1E0', fontFamily: "'Nunito', sans-serif" }}>
 
-      {/* ════════════════════════════════════════
-          DESKTOP SIDEBAR
-      ════════════════════════════════════════ */}
+      {/* DESKTOP SIDEBAR */}
       <aside className="hidden md:flex flex-col w-60 shrink-0 overflow-hidden"
         style={{
           background: '#FFFFFF',
@@ -82,7 +88,6 @@ const xpInLevel  = xp % 100;
           boxShadow: '4px 0 20px rgba(241,76,56,0.05)'
         }}>
 
-        {/* ── Logo ── */}
         <Link to="/"
           className="flex items-center gap-3 px-5 pt-6 pb-5 transition-opacity hover:opacity-75">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center overflow-hidden shrink-0"
@@ -99,16 +104,14 @@ const xpInLevel  = xp % 100;
           </div>
         </Link>
 
-        {/* Divider */}
         <div className="mx-4 mb-4"
           style={{ height: '2px', background: 'rgba(26,15,10,0.06)', borderRadius: '2px' }} />
 
-        {/* ── Nav items ── */}
         <nav className="flex-1 px-3 space-y-1.5">
-         {navItemsResolved.map((item) => {
-           const isActive = item.path.startsWith('/app/quest')
-  ? location.pathname === '/app/quest'
-  : location.pathname === item.path;
+          {navItemsResolved.map((item) => {
+            const isActive = item.path.startsWith('/app/quest')
+              ? location.pathname === '/app/quest'
+              : location.pathname === item.path;
             return (
               <Link key={item.path} to={item.path}
                 className="flex items-center gap-3 px-4 py-3.5 rounded-2xl font-black text-sm uppercase tracking-wide transition-all"
@@ -140,11 +143,9 @@ const xpInLevel  = xp % 100;
           })}
         </nav>
 
-        {/* Divider */}
         <div className="mx-4 mt-3 mb-4"
           style={{ height: '2px', background: 'rgba(26,15,10,0.06)', borderRadius: '2px' }} />
 
-        {/* ── User card ── */}
         <div className="px-3 pb-5">
           <Link to="/app/profile"
             className="flex items-center gap-3 p-3.5 rounded-2xl transition-all"
@@ -158,7 +159,6 @@ const xpInLevel  = xp % 100;
               (e.currentTarget as HTMLElement).style.borderColor = 'rgba(26,15,10,0.1)';
             }}>
 
-            {/* Avatar */}
             <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 flex items-center justify-center font-black text-xl"
               style={{
                 border: '3px solid #1a0f0a', background: '#F14C38',
@@ -169,7 +169,6 @@ const xpInLevel  = xp % 100;
                 : name.charAt(0).toUpperCase()}
             </div>
 
-            {/* Info */}
             <div className="flex-1 min-w-0">
               <p className="font-black text-base truncate leading-tight" style={{ color: '#1a0f0a' }}>
                 {name}
@@ -181,7 +180,6 @@ const xpInLevel  = xp % 100;
                   · {xp} XP
                 </span>
               </div>
-              {/* XP bar */}
               <div className="mt-1.5 h-2 rounded-full overflow-hidden"
                 style={{ background: '#F4F1E0', border: '1.5px solid rgba(26,15,10,0.1)' }}>
                 <div className="h-full rounded-full transition-all duration-700"
@@ -192,17 +190,13 @@ const xpInLevel  = xp % 100;
         </div>
       </aside>
 
-      {/* ════════════════════════════════════════
-          MAIN CONTENT
-      ════════════════════════════════════════ */}
+      {/* MAIN CONTENT */}
       <main className="flex-1 overflow-hidden flex flex-col pb-16 md:pb-0"
         style={{ background: '#F4F1E0', minWidth: 0 }}>
         {children}
       </main>
 
-      {/* ════════════════════════════════════════
-          MOBILE BOTTOM NAV
-      ════════════════════════════════════════ */}
+      {/* MOBILE BOTTOM NAV */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50"
         style={{
           background: '#FFFFFF',
@@ -210,10 +204,10 @@ const xpInLevel  = xp % 100;
           boxShadow: '0 -4px 16px rgba(241,76,56,0.08)'
         }}>
         <div className="flex justify-around px-2 py-2 pb-safe">
-{navItemsResolved.map((item) => {
-  const isActive = item.path.startsWith('/app/quest')
-    ? location.pathname === '/app/quest'
-    : location.pathname === item.path;
+          {navItemsResolved.map((item) => {
+            const isActive = item.path.startsWith('/app/quest')
+              ? location.pathname === '/app/quest'
+              : location.pathname === item.path;
             return (
               <Link key={item.path} to={item.path}
                 className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-2xl transition-all"
